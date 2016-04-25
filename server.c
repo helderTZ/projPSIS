@@ -171,7 +171,7 @@ int main(){
 	int err;
 	int socket_fd;
 	int new_socket;
-	pthread_t* tid;
+	pthread_t tid;
 	int backlog;
 
 	
@@ -205,14 +205,16 @@ int main(){
 		int client_addr_size = sizeof(client_addr);
 
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
-		err = pthread_create(tid, NULL, handle_requests, &new_socket);
+		err = pthread_create(&tid, NULL, handle_requests, &new_socket);
 		if(err!=0) {
 			perror("pthread_create");
 			exit(-1);
 		}
 		
+		printf("Request accepted\n");
         
 	}
+
 	
 	exit(0);
     
