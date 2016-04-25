@@ -167,10 +167,12 @@ int main(){
     kv_client2server m;
 	int nbytes;
 	struct sockaddr_in local_addr;
+	struct sockaddr_in client_addr;
 	int err;
 	int socket_fd;
 	int new_socket;
 	pthread_t* tid;
+	int backlog;
 
 	
 	/* create socket  */ 
@@ -191,11 +193,23 @@ int main(){
 		exit(-1);
 	}
 
+	/* listen */
+	err = listen(socket_fd, backlog);
+	if(err == -1) {
+		perror("listen");
+		exit(-1);
+	}
+
 	while(1) {
 		int local_addr_size = sizeof(local_addr);
+		int client_addr_size = sizeof(client_addr);
 
-		new_socket = accept(socket_fd, (struct sockaddr*) &local_addr, &local_addr_size);
-		pthread_create(tid, NULL, handle_requests, &new_socket);
+		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
+		err = pthread_create(tid, NULL, handle_requests, &new_socket);
+		if(err!=0) {
+			perror("pthread_create");
+			exit(-1);
+		}
 		
         
 	}
