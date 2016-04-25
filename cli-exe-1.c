@@ -1,11 +1,18 @@
 #include "psiskv.h"
+
 #include <stdio.h>
 #include <string.h>
 
 #define MAX_VALUES 10
+
 int main(){
+
 	char linha[100];
 	int kv = kv_connect("127.0.0.1", 9999);
+	if(kv==-1){
+		perror("kv_connect");
+		exit(-1);
+	}
 
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);

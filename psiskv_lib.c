@@ -6,7 +6,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 	struct sockaddr_in server_addr;
 
 	/* open socket */
-	if(socket_fd = socket(AF_INET, SOCK_STREAM, 0) == -1) {
+	if((socket_fd = socket(AF_INET, SOCK_STREAM, 0) )== -1) {
 		perror("Creating socket");
 		return -1;
 	}
@@ -14,7 +14,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 	/* fill struct */
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(kv_server_port);
-	if(inet_aton(kv_server_ip, server_addr.sin_addr) == 0)  {
+	if(inet_aton(kv_server_ip, &(server_addr.sin_addr)) == 0)  {
  		perror("inet_aton");
 		return -1;
 	}
@@ -22,7 +22,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 	/* connect */
 	int err = connect(socket_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
 	if (err == -1){
-		perror("connect: ");
+		perror("connect");
 		return -1;
 	}
 
