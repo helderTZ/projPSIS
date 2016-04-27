@@ -53,15 +53,19 @@ int search_value(int key, char delete, dictionary* ret){
 
 void* handle_requests(void* arg) {
 
-	int socket_fd = (int) arg;//saves socket file descriptor from client
+	int socket_fd = (int) arg;	//saves socket file descriptor from client
 	int nbytes;
 	int aux;
 
 	kv_client2server message;
+
+	printf("Hello thread world!");
 	
 
 	/* read message */
 	nbytes = recv(socket_fd, &message, sizeof(message), 0);
+
+	printf("Received message");
 
 	if(message.op == 'r') {
 		// search the dictionary
@@ -72,7 +76,7 @@ void* handle_requests(void* arg) {
 		if(search_error == -1) { 
 			message.error_code = -2;
 			nbytes = send(socket_fd , &message, sizeof(message), 0);
-			return (int) -1;
+			return ((int) -1);
 		}
 		
 		// send message header 
@@ -83,7 +87,7 @@ void* handle_requests(void* arg) {
 		nbytes = send(socket_fd, kv_entry->value, kv_entry->value_length, 0);
 		if(nbytes != kv_entry->value_length) {
 			perror("send failed");
-			return (int) -1;
+			return ((int) -1);
 		}
 		
 	}
@@ -97,7 +101,7 @@ void* handle_requests(void* arg) {
  
 		if(nbytes != message.value_length) {
 			perror("receive values failed");
-			return -1;
+			return ((int) -1);
 		}
 
 		// check if given key already exists
@@ -105,7 +109,7 @@ void* handle_requests(void* arg) {
 		int search_error = search_value(kv_entry->key, 0, search_entry);
 		if(search_error == 0) {//entry already exists
 			if(!message.overwrite)
-				return -2;	// value already exists and is not overwritten
+				return ((int) -2);	// value already exists and is not overwritten
 			else
 				//do overwrite
 				search_entry->value_length = message.value_length;
@@ -183,7 +187,12 @@ int main(){
 
 	local_addr.sin_family = AF_INET;
 	local_addr.sin_port = htons(PORT);
-	local_addr.sin_addr.s_addr = INADDR_ANY;
+	err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
+	if(err == -1) {
+		perror("inet_aton");
+		exit(-1);
+	}
+	//local_addr.sin_addr.s_addr = INADDR_ANY;
 	
 
 	/* bind socket */
@@ -205,6 +214,10 @@ int main(){
 		int client_addr_size = sizeof(client_addr);
 
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
+		if(new_socket == 0) {
+			perror("socket accept");
+			exit(-1);
+		}
 		err = pthread_create(&tid, NULL, handle_requests, &new_socket);
 		if(err!=0) {
 			perror("pthread_create");
