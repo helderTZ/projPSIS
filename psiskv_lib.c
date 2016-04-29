@@ -38,6 +38,12 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 	message.key = key;
 	message.value_length = value_length;
 	message.overwrite = kv_overwrite;
+	message.error_code = 0;
+
+	printf("message:\n"); fflush(stdout);
+	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
+	fflush(stdout);
 
 	/* send message header */
     int nbytes = send(kv_descriptor, &message, sizeof(message), 0);
@@ -59,6 +65,9 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 	kv_client2server message;
 	message.op = 'r';	// para identificar ao server que é uma operação de write
 	message.key = key;
+	message.value_length = 0;
+	message.overwrite = 0;
+	message.error_code = 0;
 	
     int nbytes = send(kv_descriptor, &message, sizeof(message), 0);
 	
@@ -68,9 +77,9 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 	}
 
 	/* read size of message */
-	nbytes = recv(kv_descriptor, &message, sizeof(kv_client2server), 0);
+	nbytes = recv(kv_descriptor, &message, sizeof(message), 0);
 
-	if(nbytes != message.value_length) {
+	if(nbytes == -1) {
 		perror("receive size of msg failed");
 		return -1;
 	}
@@ -81,13 +90,19 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 
 
 	/* read message */
-	nbytes = recv(kv_descriptor, value , value_length, 0);//only read up to param value_length
+	int real_length = message.value_length > value_length ? value_length : message.value_length;
+	nbytes = recv(kv_descriptor, value , real_length, 0);//only read up to param value_length
 	
 	//check length received
 	if(nbytes != message.value_length) {
 		perror("receive values failed");
 		return -1;
 	}
+
+	printf("message:\n"); fflush(stdout);
+	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
+	fflush(stdout);
 
 	return 0;
 
