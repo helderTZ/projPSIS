@@ -18,6 +18,7 @@ typedef struct dictionary{
 	int value_length;
 	void* value;
 	struct dictionary* next;
+	struct dictionary* prev;
 }dictionary;
 
 dictionary* first_entry = NULL;
@@ -26,28 +27,91 @@ dictionary* last_entry = NULL;
 
 	
 
-int search_value(int key, char op, dictionary** ret){
+int search_value(int key, char op, dictionary** ret, int overwrite){
 
 	dictionary *aux_actual, *aux_last;
 	aux_actual = aux_last = first_entry;
-
+	
+	printf("IN SEARCH_VALUE before loop\n"); fflush(stdout);
+	
+	if(first_entry==NULL) { // no elements in dict
+		if(op=='r' || op=='d')
+			return -1;
+		if(op=='w') {
+			first_entry = *ret;
+			first_entry->next == NULL;
+			first_entry->prev == NULL;
+			return 0;
+		}
+		return -1;
+	}
+	
+	if(first_entry == last_entry) {	// 1 element in dict
+		if(op=='r' && first_entry->key == key) {
+			*ret = first_entry;
+			return 0;
+		}
+		if(op=='w' && first_entry->key == key) {
+			if(overwrite==1) {
+				free(first_entry->value);
+				free(first_entry);
+				first_entry->value = (*ret)->value;
+			} else {
+				first_entry->next = *ret;
+				(*ret)->next = NULL;
+				(*ret)->prev = first_entry;
+				return 0;
+			}
+		}
+		if(op=='d' && first_entry->key == key) {
+			free(first_entry->value);
+			free(first_entry);
+			first_entry = NULL;
+			return 0;
+		}
+		return -1;
+	}
+						
+	
 	while(aux_actual!=last_entry) {//until last element
+	
+		printf("IN SEARCH_VALUE after loop\n"); fflush(stdout);
 		
 		if(aux_actual->key == key) { //found it!
+			if(op=='r') {
+				*ret = aux_actual;
+				return 0;
+			}
+			if(op=='w') {
+				if(overwrite==1) {
+					free(aux_actual->value);
+					aux_actual->value = malloc((*ret)->value_length);
+					memcpy(aux_actual->value, (*ret)->value, (*ret)->value_length);
+					return 0;
+				}
+				else {
+					// meter na ultima posiçao da lista
+					last_entry->next = (dictionary*)malloc(sizeof(dictionary));
+					(last_entry->next)->value = malloc((*ret)->value_length);
+					memcpy((last_entry->next)->value, (*ret)->value, (*ret)->value_length);
+					(last_entry->next)->prev = last_entry;
+					last_entry = last_entry->next;
+					return 0;
+				}
+			}
 			if (op == 'd'){
-				aux_last->next=aux_actual->next;
+				(aux_actual->prev)->next = aux_actual->next;
+				(aux_actual->next)->prev = aux_actual->prev;
 				free(aux_actual->value);
 				free(aux_actual);
 				return 0;
 			}
-			*ret = aux_actual;
-			return 0;
+			
+			aux_actual = aux_actual->next;
+			
 		}
 
-		if(op == 'w') {
-			aux_last=aux_actual;
-			aux_actual = aux_actual->next;
-		}
+		
 	}
 	
 	return -1;	// not in dictionary
@@ -78,7 +142,8 @@ void* handle_requests(void* arg) {
 		fflush(stdout);
 
 		printf("Received message\n"); fflush(stdout);
-
+		
+		
 
 		if(message.op == 'r') {
 
@@ -86,7 +151,9 @@ void* handle_requests(void* arg) {
 
 			// search the dictionary
 			dictionary* kv_entry;
-			int search_error = search_value(message.key, 'r', &kv_entry);
+			int search_error = search_value(message.key, 'r', &kv_entry, 0);
+			
+			printf("after search: err=%d\n", search_error); fflush(stdout);
 		
 			// entry not in dictionary
 			if(search_error == -1) { 
@@ -118,8 +185,8 @@ void* handle_requests(void* arg) {
 		if(message.op == 'w') {
 
 			printf("WRITING\n"); fflush(stdout);
-		
-			dictionary* kv_entry = (dictionary*) malloc(sizeof(dictionary));
+			
+			dictionary* kv_entry = (dictionary*) malloc(sizeof(dictionary));		
 			kv_entry->value = malloc(message.value_length);//allocate the necessary space for the message value
 
 			nbytes = recv(socket_fd, kv_entry->value , message.value_length , 0);//only read up to param value_length
@@ -131,43 +198,17 @@ void* handle_requests(void* arg) {
 
 			// check if given key already exists
 			dictionary* search_entry;
-			int search_error = search_value(kv_entry->key, 'w', &search_entry);
-			if(search_error == 0) {//entry already exists
-				if(message.overwrite) {
-					printf("fez overwrite\n"); fflush(stdout);
-					//do overwrite
-					search_entry->value_length = message.value_length;
-					free(search_entry->value);
-					search_entry->value = malloc(message.value_length);
-
-					if(memcpy(search_entry->value, kv_entry->value, message.value_length)== NULL)
-						perror("memcpy");
-
-					free(kv_entry->value);
-					free(kv_entry);
-				}
-			}
+			int search_error = search_value(kv_entry->key, 'w', &search_entry, message.overwrite);
+			
 			printf("end of check if given key already exists\n");fflush(stdout);
-
-			//store values
-			kv_entry->key=message.key;
-			kv_entry->value_length=message.value_length;
-
-			kv_entry->next =NULL;
-			if(first_entry == NULL) {
-				first_entry = kv_entry;
-				last_entry = kv_entry;
-			}else {
-				last_entry->next = kv_entry;
-				last_entry = kv_entry;			
-			}
-
+			
+			
 		
 		}
 
 		if(message.op == 'd') {
 			// search the dictionary
-			int search_error = search_value(message.key, 'd', NULL);
+			int search_error = search_value(message.key, 'd', NULL, 0);
 		
 			// entry not in dictionary
 			if(search_error == -1) { 
