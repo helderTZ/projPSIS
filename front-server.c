@@ -29,7 +29,8 @@ dictionary* last_entry = NULL;
 int search_value(int key, char op, dictionary** ret){
 
 	dictionary *aux_actual, *aux_last;
-	aux_actual = aux_last = first_entry;
+	aux_last = first_entry;
+	aux_actual = aux_last;
 
 	while(aux_actual!=last_entry) {//until last element
 		
@@ -247,6 +248,7 @@ int main(){
 		int client_addr_size = sizeof(client_addr);
 
 		printf("before accept\n");
+		getchar();
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
 		if(new_socket == 0) {
 			perror("socket accept");
@@ -254,6 +256,7 @@ int main(){
 		}
 
 		printf("after accept sck=%d\n", new_socket);
+		getchar();
 		err = pthread_create(&tid, NULL, handle_requests, (void*) new_socket);
 		if(err!=0) {
 			perror("pthread_create");

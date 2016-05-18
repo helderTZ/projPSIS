@@ -16,6 +16,7 @@ int main(){
 
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);
+		getchar();//debug
 		kv_write(kv, i , linha, strlen(linha)+1, 0);
 	}
 
@@ -23,6 +24,7 @@ int main(){
 	getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 1000) == 0){
+			getchar();
 			printf ("key - %10u value %s", i, linha);
 		}
 	}
