@@ -24,36 +24,12 @@ dictionary* first_entry = NULL;
 dictionary* last_entry = NULL;
 
 
-	
 
-int search_value(int key, char op, dictionary** ret){
-
-	dictionary *aux_actual, *aux_last;
-	aux_last = first_entry;
-	aux_actual = aux_last;
-
-	while(aux_actual!=last_entry) {//until last element
-		
-		if(aux_actual->key == key) { //found it!
-			if (op == 'd'){
-				aux_last->next=aux_actual->next;
-				free(aux_actual->value);
-				free(aux_actual);
-				return 0;
-			}
-			*ret = aux_actual;
-			return 0;
-		}
-
-		if(op == 'w') {
-			aux_last=aux_actual;
-			aux_actual = aux_actual->next;
-		}
-	}
-	
-	return -1;	// not in dictionary
+//TODO: tratar do CTRL+C
+void signal_handler() {
 
 }
+
 
 void* handle_requests(void* arg) {
 
@@ -83,113 +59,20 @@ void* handle_requests(void* arg) {
 
 		if(message.op == 'r') {
 
-			printf("READING\n"); fflush(stdout);
-
-			// search the dictionary
-			dictionary* kv_entry;
-			int search_error = search_value(message.key, 'r', &kv_entry);
-		
-			// entry not in dictionary
-			if(search_error == -1) { 
-				printf("search error / not in dict\n"); fflush(stdout);
-				message.error_code = -2;
-				nbytes = send(socket_fd , &message, sizeof(message), 0);
-				return ((int) -1);
-			}
-			
-			printf("message:\n"); fflush(stdout);
-			printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-					message.op, message.key, message.value_length, message.overwrite, message.error_code); 
-			fflush(stdout);
-
-			// send message header to client with size of msg
-			message.value_length = kv_entry->value_length;
-			nbytes = send(socket_fd , &message, sizeof(int), 0);
-	
-			//send message
-			message.error_code = 0;
-			nbytes = send(socket_fd, kv_entry->value, kv_entry->value_length, 0);
-			if(nbytes != kv_entry->value_length) {
-				perror("send failed");
-				return ((int) -1);
-			}
 		
 		}
 	
 		if(message.op == 'w') {
 
-			printf("WRITING\n"); fflush(stdout);
-		
-			dictionary* kv_entry = (dictionary*) malloc(sizeof(dictionary));
-			kv_entry->value = malloc(message.value_length);//allocate the necessary space for the message value
-
-			nbytes = recv(socket_fd, kv_entry->value , message.value_length , 0);//only read up to param value_length
-	 		printf("after recv\n");fflush(stdout);
-			if(nbytes != message.value_length) {
-				perror("receive values failed");
-				return ((int) -1);
-			}
-
-			// check if given key already exists
-			dictionary* search_entry;
-			int search_error = search_value(kv_entry->key, 'w', &search_entry);
-			if(search_error == 0) {//entry already exists
-				if(message.overwrite) {
-					printf("fez overwrite\n"); fflush(stdout);
-					//do overwrite
-					search_entry->value_length = message.value_length;
-					free(search_entry->value);
-					search_entry->value = malloc(message.value_length);
-
-					if(memcpy(search_entry->value, kv_entry->value, message.value_length)== NULL)
-						perror("memcpy");
-
-					free(kv_entry->value);
-					free(kv_entry);
-				}
-			}
-			printf("end of check if given key already exists\n");fflush(stdout);
-
-			//store values
-			kv_entry->key=message.key;
-			kv_entry->value_length=message.value_length;
-
-			kv_entry->next =NULL;
-			if(first_entry == NULL) {
-				first_entry = kv_entry;
-				last_entry = kv_entry;
-			}else {
-				last_entry->next = kv_entry;
-				last_entry = kv_entry;			
-			}
 
 		
 		}
 
 		if(message.op == 'd') {
-			// search the dictionary
-			int search_error = search_value(message.key, 'd', NULL);
-		
-			// entry not in dictionary
-			if(search_error == -1) { 
-				message.error_code = -2;
-				nbytes = send(socket_fd , &message, sizeof(message), 0);
-				return (int) -1;
-			}
-		
-			if(search_error == 0)
-				message.error_code = 0;		
-		
-			// send message ack
-			nbytes = send(socket_fd , &message, sizeof(message), 0);
-	
 
 		}
 
 		if(message.op == 'c') {
-			
-			close(socket_fd);
-			break;
 			
 		}
 
@@ -244,6 +127,7 @@ int main(){
 	}
 
 	while(1) {
+	
 		int local_addr_size = sizeof(local_addr);
 		int client_addr_size = sizeof(client_addr);
 
