@@ -19,6 +19,8 @@
 
 #define SOCK_ADDR "/tmp/sock_kv"
 #define PORT 9999
+#define LOG_FILE "/tmp/log.txt"
+#define BACKUP_FILE "/tmp/backup.bin"
 
 /* From client to server */
 
