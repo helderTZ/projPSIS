@@ -118,9 +118,9 @@ int search_value(int key, char op, dictionary** ret, int overwrite){
 
 }
 
-void* handle_requests(void* arg) {
+void * handle_requests(void* arg) {
 
-	int socket_fd = (int*) arg;	//saves socket file descriptor from client
+	int socket_fd = *((int*) arg);	//saves socket file descriptor from client
 	int nbytes;
 	int aux;
 	int i=0;
@@ -160,7 +160,8 @@ void* handle_requests(void* arg) {
 				printf("search error / not in dict\n"); fflush(stdout);
 				message.error_code = -2;
 				nbytes = send(socket_fd , &message, sizeof(message), 0);
-				return ((int) -1);
+				pthread_exit(&message.error_code);
+				//TODO:fazer o thread_join para libertar os recursos da thread terminada
 			}
 			
 			printf("message:\n"); fflush(stdout);
@@ -177,7 +178,7 @@ void* handle_requests(void* arg) {
 			nbytes = send(socket_fd, kv_entry->value, kv_entry->value_length, 0);
 			if(nbytes != kv_entry->value_length) {
 				perror("send failed");
-				return ((int) -1);
+				pthread_exit(&kv_entry->value_length);
 			}
 		
 		}
@@ -193,7 +194,7 @@ void* handle_requests(void* arg) {
 	 		printf("after recv\n");fflush(stdout);
 			if(nbytes != message.value_length) {
 				perror("receive values failed");
-				return ((int) -1);
+				return -1;
 			}
 
 			// check if given key already exists
@@ -295,7 +296,7 @@ int main(){
 		}
 
 		printf("after accept sck=%d\n", new_socket);
-		err = pthread_create(&tid, NULL, handle_requests, (void*) new_socket);
+		err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
 		if(err!=0) {
 			perror("pthread_create");
 			exit(-1);

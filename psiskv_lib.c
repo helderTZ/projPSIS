@@ -1,5 +1,6 @@
 #include "psiskv.h"
 
+
 int kv_connect(char * kv_server_ip, int kv_server_port) {
 
 	int socket_fd;
@@ -14,7 +15,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 	/* fill struct */
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(kv_server_port);
-	if(inet_aton(kv_server_ip, &(server_addr.sin_addr)) == 0)  {
+	if((inet_aton(kv_server_ip, &(server_addr.sin_addr))) == 0)  {
  		perror("inet_aton");
 		return -1;
 	}

@@ -12,6 +12,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+/*For the use of inet_aton*/
+//#define _BSD_SOURCE
+//#define _XOPEN_SOURCE 500
+/**************************/
 
 #define SOCK_ADDR "/tmp/sock_kv"
 #define PORT 9999
