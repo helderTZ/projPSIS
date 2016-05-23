@@ -34,6 +34,8 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 
 int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, int kv_overwrite) {
 
+	printf("\n\n--------------------WRITING---------------\n"); fflush(stdout);
+
 	kv_client2server message;
 	message.op = 'w';	// para identificar ao server que é uma operação de write
 	message.key = key;
@@ -63,13 +65,20 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 
 int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 
-	kv_client2server message;
+	printf("\n\n--------------------READING---------------\n"); fflush(stdout);
+
+	kv_client2server message, *message_recv, message2;
 	message.op = 'r';	// para identificar ao server que é uma operação de write
 	message.key = key;
-	message.value_length = 0;
+	message.value_length = value_length;//quanto se quer ler desta key
 	message.overwrite = 0;
 	message.error_code = 0;
 	
+	printf("message inside kv_read BEFORE sending:\n"); fflush(stdout);
+	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
+	fflush(stdout);
+
     int nbytes = send(kv_descriptor, &message, sizeof(message), 0);
 	
 	if(nbytes != sizeof(message)) {
@@ -77,34 +86,45 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 		return -1;
 	}
 
-	/* read size of message */
-	nbytes = recv(kv_descriptor, &message, sizeof(message), 0);
+	message_recv=(kv_client2server *) malloc(sizeof(kv_client2server));
 
+	printf("message inside kv_read BEFORE receiving size of value:\n"); fflush(stdout);
+	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+			message_recv->op, message_recv->key, message_recv->value_length, message_recv->overwrite, message_recv->error_code); 
+	fflush(stdout);
+
+	/* read size of message */
+	nbytes = recv(kv_descriptor, (void *)&message2, sizeof(kv_client2server), 0);
 	if(nbytes == -1) {
 		perror("receive size of msg failed");
 		return -1;
 	}
+
+	printf("message inside kv_read AFTER receiving size of value:\n"); fflush(stdout);
+	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+			message2.op, message2.key, message2.value_length, message2.overwrite, message2.error_code); 
+	fflush(stdout);
 	
 	//If the values does not exist in dictionary
-	if(message.error_code == -2)
+	if(message2.error_code == -2){
+		free(message_recv);
 		return -2;
-
+	}
 
 	/* read message */
-	int real_length = message.value_length > value_length ? value_length : message.value_length;
-	nbytes = recv(kv_descriptor, value , real_length, 0);//only read up to param value_length
+	int real_length = message2.value_length > value_length ? value_length : message2.value_length;
+	nbytes = recv(kv_descriptor, (void *)value , real_length, 0);//only read up to param value_length
 	
 	//check length received
-	if(nbytes != message.value_length) {
+	if(nbytes != real_length) {
+		free(message_recv);
 		perror("receive values failed");
 		return -1;
 	}
 
-	printf("message:\n"); fflush(stdout);
-	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
-	fflush(stdout);
+	printf("message:  value=%s\n", value); fflush(stdout);
 
+	free(message_recv);
 	return 0;
 
 	

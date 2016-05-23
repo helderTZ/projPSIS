@@ -28,6 +28,8 @@ typedef struct dictionary_entry{
 
 dictionary * find_entry(uint32_t key);
 int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite );
-int remove_entry(uint32_t key);
+int delete_entry(uint32_t key);
 int read_entry(uint32_t key, dictionary ** entry);
+void printList();
+
 #endif

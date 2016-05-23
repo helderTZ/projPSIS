@@ -48,12 +48,12 @@ void * handle_requests(void* arg) {
 	kv_client2server message;
 
 	//DEBUG
-	printf("Hello thread world! ckt=%d\n", socket_fd); fflush(stdout);
+	//printf("Hello thread world! ckt=%d\n", socket_fd); fflush(stdout);
 	
 	while(1) {
 		
 		//DEBUG
-		printf("start of loop, i=%d\n", i++); fflush(stdout);
+		//printf("start of loop, i=%d\n", i++); fflush(stdout);
 		
 		/* read message */
 		nbytes = recv(socket_fd, &message, sizeof(message), 0);
@@ -105,20 +105,40 @@ int read_db(int socket_fd, kv_client2server message) {
 	dictionary * entry;
 	int err, nbytes;
 
+	printList();
+
 	//DEBUG
-	printf("READING\n"); fflush(stdout);
+	printf("\n\n------------------READING--------------------\n"); fflush(stdout);
 	
+	
+
 	message.error_code=read_entry(message.key, &entry);
+
+	printf("message value_length=%d\tmessage requested_length=%d\n", 
+			entry->value_length, message.value_length);
 
 	if(entry->value_length > message.value_length)//message not entirely read
 		message.error_code=-3;
+
 	else{
 		message.value_length=entry->value_length;
 		//message.value=entry->value;
-	}	
+	}
+
+	printf("message real_length=%d\n", message.value_length);
+
+	printf("message inside read_db BEFORE sending:\n"); fflush(stdout);
+		printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+				message.op, message.key, message.value_length, message.overwrite, message.error_code); 
+		fflush(stdout);
 
 	// send message header to client with size of msg
 	nbytes = send(socket_fd , &message, sizeof(message), 0);
+
+	printf("message inside read_db AFTER sending:\n"); fflush(stdout);
+		printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
+				message.op, message.key, message.value_length, message.overwrite, message.error_code); 
+		fflush(stdout);
 
 	nbytes = send(socket_fd, entry->value, message.value_length, 0);
 	if(nbytes != message.value_length) {
@@ -140,7 +160,7 @@ int write_db(int socket_fd, kv_client2server message) {
 	int err, nbytes;
 
 	//DEBUG
-	printf("WRITING\n"); fflush(stdout);
+	printf("\n\n---------------------WRITING------------------\n"); fflush(stdout);
 
 	value = malloc(message.value_length);//allocate the necessary space for the message value
 
@@ -151,9 +171,11 @@ int write_db(int socket_fd, kv_client2server message) {
 		return -1;
 	}
 
-
+	printf("Before addentry\n");fflush(stdout);
+	
 	message.error_code=add_entry(message.key, value, message.value_length, message.overwrite );
 	
+	printf("after addentry: error_code=%d\n", message.error_code);fflush(stdout);
 	nbytes = send(socket_fd, &message, sizeof(message), 0);
 	if(nbytes != sizeof(message)) {
 		perror("send failed");
@@ -237,7 +259,7 @@ int main(){
 	
 	/* initialisation */
 	//initialisation();
-
+	dictionary_init();
 	
 	/* create socket  */ 
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {

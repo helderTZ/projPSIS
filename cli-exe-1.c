@@ -16,16 +16,16 @@ int main(){
 
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);
-		getchar();//debug
+		//getchar();//debug
 		kv_write(kv, i , linha, strlen(linha)+1, 0);
 	}
 
-	printf("press enter to read values\n");
+	printf("\npress enter to read values\n");
 	getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 1000) == 0){
 			getchar();
-			printf ("key - %10u value %s", i, linha);
+			printf ("key - %10u value %s\n", i, linha);
 		}
 	}
 

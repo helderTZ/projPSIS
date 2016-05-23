@@ -3,10 +3,10 @@
 #define DbInitSize 10
 
 dictionary * database;
+char isEmpty=1;
 
 int dictionary_init(){
 	int i;
-	//dictionary * dbaux;
 	//verificar se existe backup file, se existir fazer backup
 
 	//se houver backup alocar o tamanho necessario ao backup
@@ -16,20 +16,7 @@ int dictionary_init(){
 	
 	database->next=database;
 	database->prev=database;
-	/*dbaux=database;
-	printf("antes do for\n");
-	for (i = 0; i < DbInitSize; i++){
-		dbaux[i].value=NULL;
-		dbaux[i].value_length=0;
-		if(i<DbInitSize-1){
-			dbaux[i].next=&dbaux[i+1];
-			dbaux[i+1].prev=&dbaux[i];
-		}else
-			dbaux[i].next=dbaux;
-	}
-	database->prev=&dbaux[DbInitSize-1];
-	printf("depois do for\n");
-	*/
+	isEmpty=1;
 	return 0;
 
 }
@@ -37,6 +24,9 @@ int dictionary_init(){
 dictionary * find_entry(uint32_t key){
 	dictionary *aux = database;
 	int i=0;
+
+	if(isEmpty) return NULL;
+
 	//Critical region
 	if(aux->key==key) return aux;
 
@@ -57,6 +47,16 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 	dictionary *new_entry;
 	dictionary entry_found, * entry_found_ptr;
 
+	//DEBUG
+	static int blahblah=0;
+
+	if(isEmpty) {
+		database->key = key;
+		database->value = value;
+		database->value_length = value_length;
+		isEmpty = 0;
+	}
+
 	entry_found_ptr=find_entry(key);
 	if(entry_found_ptr!=NULL){//if entry exists
 
@@ -64,6 +64,7 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		
 		if (overwrite){
 			//value = (void *) malloc(value_length);
+			printf("Inside overwrite %d\n", blahblah++); fflush(stdout);
 			new_entry =(dictionary *) malloc(sizeof(dictionary));
 		
 			new_entry->prev = entry_found_ptr->prev;//copy old entry into new entry prev pointer
@@ -79,8 +80,10 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 			return -2;
 
 	}else{//add new entry
+		isEmpty=0;
+
 		new_entry =(dictionary *) malloc(sizeof(dictionary));
-		//new_entry->value = (void *) malloc(value_length);
+		new_entry->value = (void *) malloc(value_length);
 		
 		new_entry->prev=database->prev;
 		new_entry->next=database;//new entry next point to first entry
@@ -99,7 +102,7 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 @return 0 if entry sucessfuly removed
 @return -1 if error ocurred
 */
-int remove_entry(uint32_t key){
+int delete_entry(uint32_t key){
 	dictionary *aux;
 	aux=find_entry(key);
 	if (aux!=NULL){
@@ -131,17 +134,35 @@ int read_entry(uint32_t key, dictionary ** entry){
 
 }
 
+void printList() {
+
+	dictionary* aux = database;
+	while(aux->next!=database) {
+		printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);
+		aux = aux->next;
+	}
+
+}
+
+/*
 void main(void){
 	dictionary *entry;
-	int value=150;
+	int * value;
 	uint32_t key=10;
 	dictionary * read_value;
 
+	value = (int *) malloc(sizeof(int));
+	*value =150;
+
 	if(dictionary_init()==-1)
 		printf("init error\n");
-	
-	if(add_entry(key,(void *)&value,sizeof(int),0)==-1)
+
+	printf("after init\n");
+
+	if(add_entry(key, (void *) value,sizeof(int),0)==-1)
 		printf("add entry error\n");
+
+	printf("after add\n");
 
 	entry = find_entry(10);
 	if(entry==NULL)
@@ -159,7 +180,7 @@ void main(void){
 		printf("key=%d value=%d value_length=%d\n", entry->key, *((int *)entry->value), entry->value_length );
 
 	
-	if(remove_entry(key))
+	if(delete_entry(key))
 		printf("Remove: value not exists\n");
 	else
 		printf("value removed\n");
@@ -173,4 +194,4 @@ void main(void){
 		printf("read_value=%d\n", (*(int *)read_value));
 	else
 		printf("read_value:error\n");
-}
+}*/
