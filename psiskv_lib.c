@@ -93,6 +93,7 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 			message_recv->op, message_recv->key, message_recv->value_length, message_recv->overwrite, message_recv->error_code); 
 	fflush(stdout);
 
+	
 	/* read size of message */
 	nbytes = recv(kv_descriptor, (void *)&message2, sizeof(kv_client2server), 0);
 	if(nbytes == -1) {

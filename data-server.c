@@ -57,6 +57,10 @@ void * handle_requests(void* arg) {
 		
 		/* read message */
 		nbytes = recv(socket_fd, &message, sizeof(message), 0);
+		if(nbytes != sizeof(message)) {
+			perror("reveive failed");
+			return -1;
+		}
 
 		//DEBUG
 		printf("nbytes: %d\n", nbytes); fflush(stdout);
@@ -165,13 +169,13 @@ int write_db(int socket_fd, kv_client2server message) {
 	value = malloc(message.value_length);//allocate the necessary space for the message value
 
 	nbytes = recv(socket_fd, value , message.value_length , 0);//only read up to param value_length
-	printf("after recv\n");fflush(stdout);
+	//printf("after recv\n");fflush(stdout);
 	if(nbytes != message.value_length) {
 		perror("receive values failed");
 		return -1;
 	}
 
-	printf("Before addentry\n");fflush(stdout);
+	//printf("Before addentry\n");fflush(stdout);
 	
 	message.error_code=add_entry(message.key, value, message.value_length, message.overwrite );
 	
@@ -185,7 +189,7 @@ int write_db(int socket_fd, kv_client2server message) {
 	}
 
 	//DEBUG
-	printf("end of check if given key already exists\n");fflush(stdout);
+	//printf("end of check if given key already exists\n");fflush(stdout);
 
 }
 

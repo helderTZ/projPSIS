@@ -138,8 +138,9 @@ void printList() {
 
 	dictionary* aux = database;
 	while(aux->next!=database) {
-		printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);
 		aux = aux->next;
+		printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);
+		
 	}
 
 }
