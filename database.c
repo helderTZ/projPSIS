@@ -50,7 +50,7 @@ dictionary * find_entry(uint32_t key){
 }
 
 /** add_entry function*************************
-@return 1 if entry already exists
+@return -2 if entry already exists and not overwrite
 @return 0 if no errors
 @return -1 if errors found
 ************************************************/
@@ -64,7 +64,7 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		entry_found=*entry_found_ptr;	
 		
 		if (overwrite){
-			value = (void *) malloc(value_length);
+			//value = (void *) malloc(value_length);
 			new_entry =(dictionary *) malloc(sizeof(dictionary));
 		
 			new_entry->prev = entry_found_ptr->prev;//copy old entry into new entry prev pointer
@@ -77,11 +77,11 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 			
 			return 0;
 		}else//if already exists and not overwrite -> do nothing
-			return 1;
+			return -2;
 
 	}else{//add new entry
 		new_entry =(dictionary *) malloc(sizeof(dictionary));
-		new_entry->value = (void *) malloc(value_length);
+		//new_entry->value = (void *) malloc(value_length);
 		
 		new_entry->prev=database->prev;
 		new_entry->next=database;//new entry next point to first entry
@@ -121,12 +121,12 @@ Warning: Do not forget to free the memory after read_entry function
 @return 0 if entry sucessfuly read
 @return -1 if error ocurred
 */
-int read_entry(uint32_t key, void ** value){
+int read_entry(uint32_t key, void ** entry){
 	dictionary *aux;
 	aux = find_entry(key);
 	if(aux!=NULL){
-		*value = (void *) malloc(aux->value_length);
-		memcpy(*value, aux->value, aux->value_length);
+		*entry = (dictionary*) malloc(sizeof(dictionary));
+		memcpy(*entry, aux, sizeof(dictionary));
 		return 0;
 	}else return 1;
 	

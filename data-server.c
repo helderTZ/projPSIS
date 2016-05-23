@@ -111,44 +111,38 @@ void * handle_requests(void* arg) {
 
 
 
-void read_db(int socket_fd, kv_client2server message) {
+int read_db(int socket_fd, kv_client2server message) {
+
+	dictionary * entry;
+	int err;
 
 	//DEBUG
 	printf("READING\n"); fflush(stdout);
 	
-	// search the dictionary
-	dictionary kv_entry = find_entry(message.key);
+	err=read_entry(message.key, &entry);
 
-	//DEBUG
-	printf("after search: err=%d\n", search_error); fflush(stdout);
-
-	// entry not in dictionary
-	if(search_error == NULL) { 
-		printf("search error / not in dict\n"); fflush(stdout);
-		message.error_code = -2;
-		nbytes = send(socket_fd , &message, sizeof(message), 0);
-		pthread_exit(&message.error_code);
-		//TODO:fazer o thread_join para libertar os recursos da thread terminada
-	}
-
-	//DEBUG
-	printf("message:\n"); fflush(stdout);
-	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
-	fflush(stdout);
+	if(err==0)//success
+		if(entry->value_length > message.value_length)//message not entirely read
+			message.error_code=-3;
+		else{
+			message.value_length=entry->value_length;
+			message.value=entry->value;
+		}	
+	else if(err==1)//entry not exists
+		message.error_code=-2;
 
 	// send message header to client with size of msg
-	message.value_length = kv_entry->value_length;
-	nbytes = send(socket_fd , &message, sizeof(int), 0);
+	nbytes = send(socket_fd , &message, sizeof(message), 0);
 
-	//send message
-	message.error_code = 0;
-	nbytes = send(socket_fd, kv_entry->value, kv_entry->value_length, 0);
-	if(nbytes != kv_entry->value_length) {
+	nbytes = send(socket_fd, entry->value, message->value_length, 0);
+	if(nbytes != message->value_length) {
 		perror("send failed");
-		pthread_exit(&kv_entry->value_length);
+		//TODO: ver se é preciso fazer o join da thread -  ver slides
+		//pthread_exit(&kv_entry->value_length);
+		return -1;
 	}
 
+	return 0;
 }
 
 
@@ -156,56 +150,48 @@ void read_db(int socket_fd, kv_client2server message) {
 
 void write_db(kv_client2server message) {
 
+	void * value;
+	int err;
+
 	//DEBUG
 	printf("WRITING\n"); fflush(stdout);
 
-	dictionary* kv_entry = (dictionary*) malloc(sizeof(dictionary));		
-	kv_entry->value = malloc(message.value_length);//allocate the necessary space for the message value
+	value = malloc(message.value_length);//allocate the necessary space for the message value
 
-	nbytes = recv(socket_fd, kv_entry->value , message.value_length , 0);//only read up to param value_length
+	nbytes = recv(socket_fd, value , message.value_length , 0);//only read up to param value_length
 	printf("after recv\n");fflush(stdout);
 	if(nbytes != message.value_length) {
 		perror("receive values failed");
 		return -1;
 	}
 
-	// check if given key already exists
-	dictionary* search_entry;
-	int search_error = add_entry(kv_entry->key, kv_entry->value, kv_entry->value_length, message.overwrite);
-	if(search_error==-1) {
-		//TODO:...
-	}
 
+	message.error_code=add_entry(message.key, value, message.value_length, message.overwrite );
+	
+	//TODO: enviar mensagem de volta com o error code.
+	
 	//DEBUG
 	printf("end of check if given key already exists\n");fflush(stdout);
 
 }
 
 
+int delete_db(int soket_fd, kv_client2server message) {
+	int err, nbytes;
 
-
-void delete_db(int soket_fd, kv_client2server message) {
-
-	// search the dictionary
-	int search_error = search_value(message.key, 'd', NULL, 0);
-
-	// entry not in dictionary
-	if(search_error == -1) { 
+	err = delete_entry(message.key);
+	if (err==1)//delete successfull
+		message.error_code = 0;	
+	else if (err==0)// entry not in dictionary
 		message.error_code = -2;
-		nbytes = send(socket_fd , &message, sizeof(message), 0);
-		return (int) -1;
-	}
+	else //error
+		message.error_code = -1;
 
-	if(search_error == 0)
-		message.error_code = 0;		
-
-	// send message ack
 	nbytes = send(socket_fd , &message, sizeof(message), 0);
-
+	if(nbytes!=sizeof(message))
+		return -1;
+	else return 0;
 }
-
-
-
 
 
 void close_db(int socket_fd) {
