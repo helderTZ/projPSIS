@@ -41,7 +41,6 @@ dictionary * find_entry(uint32_t key){
 	if(aux->key==key) return aux;
 
 	while(aux->next != database){
-		//printf("it=%d\n", i++);
 		aux = aux->next;
 		if(aux->key==key)
 			return aux;
@@ -109,9 +108,7 @@ int remove_entry(uint32_t key){
 		free(aux->value);
 		free(aux);
 		return 0;
-	}else return 1;
-
-	return -1; 
+	}else return -1;
 }
 
 /* 
@@ -121,14 +118,14 @@ Warning: Do not forget to free the memory after read_entry function
 @return 0 if entry sucessfuly read
 @return -1 if error ocurred
 */
-int read_entry(uint32_t key, void ** entry){
+int read_entry(uint32_t key, dictionary ** entry){
 	dictionary *aux;
 	aux = find_entry(key);
 	if(aux!=NULL){
 		*entry = (dictionary*) malloc(sizeof(dictionary));
 		memcpy(*entry, aux, sizeof(dictionary));
 		return 0;
-	}else return 1;
+	}else return -2;
 	
 	return -1;
 
@@ -138,7 +135,7 @@ void main(void){
 	dictionary *entry;
 	int value=150;
 	uint32_t key=10;
-	void * read_value;
+	dictionary * read_value;
 
 	if(dictionary_init()==-1)
 		printf("init error\n");

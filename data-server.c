@@ -14,27 +14,16 @@
 #include <signal.h>
 #include <pthread.h>
 
-typedef struct dictionary{
-	int key;
-	int value_length;
-	void* value;
-	struct dictionary* next;
-	struct dictionary* prev;
-}dictionary;
 
-dictionary* first_entry = NULL;
-dictionary* last_entry = NULL;
-
-
-int read_db(int, kv_client2server);
-int write_db(int, kv_client2server);
-int delete_db(int, kv_client2server);
+int read_db(int socket_fd, kv_client2server message);
+int write_db(int socket_fd, kv_client2server message);
+int delete_db(int socket_fd, kv_client2server message);
 int close_db(int);
 
 
 
 //TODO: transformar o log num backup periodicamente, por exemplo, no principio e no fim
-void log() {
+/*void log() {
 
 	fopen(LOG_FILE, "a");
 	
@@ -45,7 +34,7 @@ void log() {
 	
 	fclose(LOG_FILE);
 
-}
+}*/
 
 
 
@@ -102,7 +91,7 @@ void * handle_requests(void* arg) {
 	}//end while
 	
 	// terminate this thread
-	pthread_exit();
+	//pthread_exit();
 	
 }//end handle_requests
 
@@ -114,28 +103,25 @@ void * handle_requests(void* arg) {
 int read_db(int socket_fd, kv_client2server message) {
 
 	dictionary * entry;
-	int err;
+	int err, nbytes;
 
 	//DEBUG
 	printf("READING\n"); fflush(stdout);
 	
-	err=read_entry(message.key, &entry);
+	message.error_code=read_entry(message.key, &entry);
 
-	if(err==0)//success
-		if(entry->value_length > message.value_length)//message not entirely read
-			message.error_code=-3;
-		else{
-			message.value_length=entry->value_length;
-			message.value=entry->value;
-		}	
-	else if(err==1)//entry not exists
-		message.error_code=-2;
+	if(entry->value_length > message.value_length)//message not entirely read
+		message.error_code=-3;
+	else{
+		message.value_length=entry->value_length;
+		//message.value=entry->value;
+	}	
 
 	// send message header to client with size of msg
 	nbytes = send(socket_fd , &message, sizeof(message), 0);
 
-	nbytes = send(socket_fd, entry->value, message->value_length, 0);
-	if(nbytes != message->value_length) {
+	nbytes = send(socket_fd, entry->value, message.value_length, 0);
+	if(nbytes != message.value_length) {
 		perror("send failed");
 		//TODO: ver se é preciso fazer o join da thread -  ver slides
 		//pthread_exit(&kv_entry->value_length);
@@ -148,10 +134,10 @@ int read_db(int socket_fd, kv_client2server message) {
 
 
 
-void write_db(kv_client2server message) {
+int write_db(int socket_fd, kv_client2server message) {
 
 	void * value;
-	int err;
+	int err, nbytes;
 
 	//DEBUG
 	printf("WRITING\n"); fflush(stdout);
@@ -168,24 +154,24 @@ void write_db(kv_client2server message) {
 
 	message.error_code=add_entry(message.key, value, message.value_length, message.overwrite );
 	
-	//TODO: enviar mensagem de volta com o error code.
-	
+	nbytes = send(socket_fd, &message, sizeof(message), 0);
+	if(nbytes != sizeof(message)) {
+		perror("send failed");
+		//TODO: ver se é preciso fazer o join da thread -  ver slides
+		//pthread_exit(&kv_entry->value_length);
+		return -1;
+	}
+
 	//DEBUG
 	printf("end of check if given key already exists\n");fflush(stdout);
 
 }
 
 
-int delete_db(int soket_fd, kv_client2server message) {
+int delete_db(int socket_fd, kv_client2server message) {
 	int err, nbytes;
 
-	err = delete_entry(message.key);
-	if (err==1)//delete successfull
-		message.error_code = 0;	
-	else if (err==0)// entry not in dictionary
-		message.error_code = -2;
-	else //error
-		message.error_code = -1;
+	message.error_code = delete_entry(message.key);
 
 	nbytes = send(socket_fd , &message, sizeof(message), 0);
 	if(nbytes!=sizeof(message))
@@ -194,13 +180,13 @@ int delete_db(int soket_fd, kv_client2server message) {
 }
 
 
-void close_db(int socket_fd) {
-	close(socket_fd);
+int close_db(int socket_fd) {
+	return close(socket_fd);
 }
 
 
 
-int initialisation() {
+/*int initialisation() {
 
 	//TODO: ler backup e preencher o dictionary
 	//TODO: definir estrutura para guardar no backup, ex:
@@ -234,7 +220,7 @@ int initialisation() {
 	
 	return 0;
 
-}
+}*/
 
 int main(){
 
@@ -250,7 +236,7 @@ int main(){
 	
 	
 	/* initialisation */
-	initialisation();
+	//initialisation();
 
 	
 	/* create socket  */ 
