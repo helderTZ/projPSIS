@@ -95,10 +95,50 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		return -1;
 }
 
+/*
+@return 1 if entry not exists
+@return 0 if entry sucessfuly removed
+@return -1 if error ocurred
+*/
+int remove_entry(uint32_t key){
+	dictionary *aux;
+	aux=find_entry(key);
+	if (aux!=NULL){
+		aux->prev->next=aux->next;
+		aux->next->prev=aux->prev;
+		free(aux->value);
+		free(aux);
+		return 0;
+	}else return 1;
+
+	return -1; 
+}
+
+/* 
+Warning: Do not forget to free the memory after read_entry function
+@param entry points to found entry in order to be read
+@return 1 if entry not exists
+@return 0 if entry sucessfuly read
+@return -1 if error ocurred
+*/
+int read_entry(uint32_t key, void ** value){
+	dictionary *aux;
+	aux = find_entry(key);
+	if(aux!=NULL){
+		*value = (void *) malloc(aux->value_length);
+		memcpy(*value, aux->value, aux->value_length);
+		return 0;
+	}else return 1;
+	
+	return -1;
+
+}
+
 void main(void){
 	dictionary *entry;
 	int value=150;
 	uint32_t key=10;
+	void * read_value;
 
 	if(dictionary_init()==-1)
 		printf("init error\n");
@@ -115,10 +155,25 @@ void main(void){
 	if(add_entry(50,(void *)&value,sizeof(int),0)==-1)
 		printf("add entry error\n");
 
-	entry = find_entry(10);
+	entry = find_entry(50);
 	if(entry==NULL)
 		printf("entry null\n");
 	else
 		printf("key=%d value=%d value_length=%d\n", entry->key, *((int *)entry->value), entry->value_length );
 
+	
+	if(remove_entry(key))
+		printf("Remove: value not exists\n");
+	else
+		printf("value removed\n");
+	entry = find_entry(10);
+	if (entry!=NULL)
+		printf("key=%d value=%d value_length=%d\n", entry->key, *((int *)entry->value), entry->value_length );
+	else
+		printf("Not exists\n");
+
+	if(read_entry(50, &read_value)==0)
+		printf("read_value=%d\n", (*(int *)read_value));
+	else
+		printf("read_value:error\n");
 }
