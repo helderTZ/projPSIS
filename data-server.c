@@ -1,24 +1,8 @@
-#include "psiskv.h"
-#include "database.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <signal.h>
-#include <pthread.h>
+#include "data-server.h"
 
 
-int read_db(int socket_fd, kv_client2server message);
-int write_db(int socket_fd, kv_client2server message);
-int delete_db(int socket_fd, kv_client2server message);
-int close_db(int);
+
 
 
 
@@ -45,47 +29,43 @@ void * handle_requests(void* arg) {
 	int aux;
 	int i=0;
 
-	kv_client2server message;
-
-	//DEBUG
-	//printf("Hello thread world! ckt=%d\n", socket_fd); fflush(stdout);
 	
 	while(1) {
 		
 		//DEBUG
-		//printf("start of loop, i=%d\n", i++); fflush(stdout);
+		printf("\n\nstart of loop, i=%d\n", i++); fflush(stdout);
 		
 		/* read message */
-		nbytes = recv(socket_fd, &message, sizeof(message), 0);
-		if(nbytes != sizeof(message)) {
+		nbytes = recv(socket_fd, &message_thread, sizeof(message_thread), 0);
+		if(nbytes != sizeof(message_thread)) {
 			perror("reveive failed");
-			return -1;
+			exit(-1);
 		}
 
 		//DEBUG
 		printf("nbytes: %d\n", nbytes); fflush(stdout);
 		printf("message:\n"); fflush(stdout);
 		printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-				message.op, message.key, message.value_length, message.overwrite, message.error_code); 
+				message_thread.op, message_thread.key, message_thread.value_length, message_thread.overwrite, message_thread.error_code); 
 		fflush(stdout);
 
 		printf("Received message\n"); fflush(stdout);
 		
 		
 
-		if(message.op == 'r') {
-			read_db(socket_fd, message);
+		if(message_thread.op == 'r') {
+			read_db(socket_fd, message_thread);
 		}
 	
-		if(message.op == 'w') {
-			write_db(socket_fd, message);
+		if(message_thread.op == 'w') {
+			write_db(socket_fd, message_thread);
 		}
 
-		if(message.op == 'd') {
-			delete_db(socket_fd, message);
+		if(message_thread.op == 'd') {
+			delete_db(socket_fd, message_thread);
 		}
 
-		if(message.op == 'c') {
+		if(message_thread.op == 'c') {
 			close_db(socket_fd);
 			// break out of loop if client wants t oclose connection
 			break;
@@ -136,6 +116,8 @@ int read_db(int socket_fd, kv_client2server message) {
 				message.op, message.key, message.value_length, message.overwrite, message.error_code); 
 		fflush(stdout);
 
+		
+		printf("socket_fd=%d\n", socket_fd);
 	// send message header to client with size of msg
 	nbytes = send(socket_fd , &message, sizeof(message), 0);
 
@@ -247,7 +229,7 @@ int close_db(int socket_fd) {
 	return 0;
 
 }*/
-
+/*
 int main(){
 
     kv_client2server m;
@@ -260,52 +242,9 @@ int main(){
 	pthread_t tid;
 	int backlog;
 	
-	
-	/* initialisation */
 	//initialisation();
 	dictionary_init();
 	
-	/* create socket  */ 
-	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("socket");
-		exit(-1);
-	}
-
-	local_addr.sin_family = AF_INET;
-	local_addr.sin_port = htons(PORT);
-	//err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
-	if(err == -1) {
-		perror("inet_aton");
-		exit(-1);
-	}
-	local_addr.sin_addr.s_addr = INADDR_ANY;
-	
-
-	/* bind socket */
-	err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
-	if(err == -1) {
-		perror("bind");
-		exit(-1);
-	}
-
-	/* listen */
-	err = listen(socket_fd, backlog);
-	if(err == -1) {
-		perror("listen");
-		exit(-1);
-	}
-
-	while(1) {
-		int local_addr_size = sizeof(local_addr);
-		int client_addr_size = sizeof(client_addr);
-
-		printf("before accept\n");
-		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
-		if(new_socket == 0) {
-			perror("socket accept");
-			exit(-1);
-		}
-
 		printf("after accept sck=%d\n", new_socket);
 		err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
 		if(err!=0) {
@@ -320,4 +259,4 @@ int main(){
 	
 	exit(0);
     
-}
+}*/

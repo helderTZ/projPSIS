@@ -32,6 +32,8 @@ typedef struct kv_client2server {
 	char error_code;
 }kv_client2server;
 
+kv_client2server message_global;
+
 
 /*typedef struct kv_read {
 	char op;
