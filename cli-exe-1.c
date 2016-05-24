@@ -16,7 +16,6 @@ int main(){
 
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);
-		//getchar();//debug
 		kv_write(kv, i , linha, strlen(linha)+1, 0);
 	}
 

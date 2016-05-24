@@ -13,6 +13,8 @@
 #include <string.h>
 #include <signal.h>
 #include <pthread.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
  
 kv_client2server message_thread;
  
@@ -29,16 +31,25 @@ int close_db(int);
  
     fopen(LOG_FILE, "a");
      
-     
-     
-     
-     
-     
     fclose(LOG_FILE);
  
 }*/
+
+
+void error_and_die(const char *msg) {
+  perror(msg);
+  exit(EXIT_FAILURE);
+}
+
+
  
- 
+void * heartbeat_thread(void* arg) {
+	int * shm = (int *) arg;
+	while(1){
+		*shm=0;
+		sleep(5);
+	}
+}
  
 void * handle_requests(void* arg) {
  
@@ -47,10 +58,6 @@ void * handle_requests(void* arg) {
     int aux;
     int i=0;
  
- 
-    //DEBUG
-    //printf("Hello thread world! ckt=%d\n", socket_fd); fflush(stdout);
-     
     while(1) {
          
         //DEBUG
@@ -150,8 +157,6 @@ int read_db(int socket_fd, kv_client2server message) {
     nbytes = send(socket_fd, entry->value, message.value_length, 0);
     if(nbytes != message.value_length) {
         perror("send failed");
-        //TODO: ver se é preciso fazer o join da thread -  ver slides
-        //pthread_exit(&kv_entry->value_length);
         return -1;
     }
  
@@ -190,10 +195,6 @@ int write_db(int socket_fd, kv_client2server message) {
         //pthread_exit(&kv_entry->value_length);
         return -1;
     }
- 
-    //DEBUG
-    //printf("end of check if given key already exists\n");fflush(stdout);
- 
 }
  
  
@@ -262,65 +263,60 @@ int main(){
     int new_socket;
     pthread_t tid;
     int backlog;
-     
+
+    //Shared Memory;
+	int shmid;
+	key_t key = 1234; //name of shared memory segment
+	int *shm;
+	int heartbeat=1;
+
      
     /* initialisation */
-    //initialisation();
     dictionary_init();
      
     /* create socket  */
-    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
-        exit(-1);
-    }
+    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) error_and_die("socket");
  
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(PORT);
     //err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
-    if(err == -1) {
-        perror("inet_aton");
-        exit(-1);
-    }
+    if(err == -1) error_and_die("inet_aton");
     local_addr.sin_addr.s_addr = INADDR_ANY;
      
  
     /* bind socket */
     err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
-    if(err == -1) {
-        perror("bind");
-        exit(-1);
-    }
+    if(err == -1) error_and_die("bind");
  
     /* listen */
     err = listen(socket_fd, backlog);
-    if(err == -1) {
-        perror("listen");
-        exit(-1);
-    }
+    if(err == -1) error_and_die("listen");
+
+	//Shared memory init***************************
+	/*
+	 * Create the segment.
+	 */
+	if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
+
+	/*
+	 * Now we attach the segment to our data space.
+	 */
+	if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
+	//********************************************************
+
+    err = pthread_create(&tid, NULL, heartbeat_thread,(void *) shm);
+    if(err!=0) error_and_die("pthread_create heartbeat");
  
     while(1) {
-        int local_addr_size = sizeof(local_addr);
         int client_addr_size = sizeof(client_addr);
- 
-        printf("before accept\n");
+ 		
+        printf("waiting for accept...\n");
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
-        if(new_socket == 0) {
-            perror("socket accept");
-            exit(-1);
-        }
- 
-        printf("after accept sck=%d\n", new_socket);
+        if(new_socket == 0) error_and_die("socket accept");
+
         err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
-        if(err!=0) {
-            perror("pthread_create");
-            exit(-1);
-        }
-         
-        printf("Request accepted\n");
-         
+        if(err!=0)error_and_die("pthread_create");
     }
- 
-     
     exit(0);
      
 }

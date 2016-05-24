@@ -15,8 +15,14 @@
 
 
 
-//TODO: tratar do CTRL+C
+void error_and_die(const char *msg) {
+  perror(msg);
+  exit(EXIT_FAILURE);
+}
 
+
+
+//TODO: tratar do CTRL+C
 
 int main(int argc, char *argv[], char *envp[]){
 
@@ -29,6 +35,13 @@ int main(int argc, char *argv[], char *envp[]){
 	int new_socket;
 	pthread_t tid;
 	int backlog;
+	pid_t pid;
+
+	//Shared Memory;
+	int shmid;
+    key_t key;
+    int *shm;
+    int heartbeat=1;
 
 	system("pwd > pwd.txt");
 	FILE *f_pwd = fopen("pwd.txt", "r");
@@ -38,14 +51,47 @@ int main(int argc, char *argv[], char *envp[]){
 	printf("pwd: %s\n", pwd);
 	fclose(f_pwd);
 
-	err=fork();
-	if (err==0){
-		char* newarg[] = {pwd, "data-server", NULL};
-		execve("data-server", newarg, envp);
-    }else {
+	//Shared memory init***************************
+	/*
+     * We'll name our shared memory segment
+     * "1234".
+     */
+    key = 1234;
 
-    	printf("blahblahblah\n");
+    /*
+     * Create the segment.
+     */
+    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
 
+    /*
+     * Now we attach the segment to our data space.
+     */
+    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
+    
+  	//*************************************************
+  	while(1){
+		pid=fork();
+		printf("pid=%d\n",pid);
+		if (pid==0){
+			char* newarg[] = {pwd, "data-server", NULL};
+			execve("data-server", newarg, envp);
+	    }else {
+
+	    	printf("blahblahblah\n");
+	    	heartbeat=1;
+	    	while(heartbeat){
+	    		*shm=1;
+	    		sleep(10);
+	    		if(*shm==1)
+	    			heartbeat=0;
+	    	}
+	    	wait();
+	    }
+	}
+
+	
+	exit(0);
+}
     	/*
 	
 		// create socket
@@ -101,9 +147,4 @@ int main(int argc, char *argv[], char *envp[]){
 
 		}*/
 
-	}
 
-	
-	exit(0);
-    
-}
