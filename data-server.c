@@ -119,47 +119,23 @@ int read_db(int socket_fd, kv_client2server message) {
  
     printList();
  
-    //DEBUG
-    printf("\n\n------------------READING--------------------\n"); fflush(stdout);
-     
-     
- 
     message.error_code=read_entry(message.key, &entry);
- 
-    printf("message value_length=%d\tmessage requested_length=%d\n", 
-            entry->value_length, message.value_length);
- 
+    printf("message error_code=%d\n", message.error_code);
     if(entry->value_length > message.value_length)//message not entirely read
-        message.error_code=-3;
- 
+        message.error_code=-3; 
     else{
         message.value_length=entry->value_length;
-        //message.value=entry->value;
     }
- 
-    printf("message real_length=%d\n", message.value_length);
- 
-    printf("message inside read_db BEFORE sending:\n"); fflush(stdout);
-        printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-                message.op, message.key, message.value_length, message.overwrite, message.error_code); 
-        fflush(stdout);
- 
-         
-        printf("socket_fd=%d\n", socket_fd);
-    // send message header to client with size of msg
+
+    // send message header to client with real size of msg
     nbytes = send(socket_fd , &message, sizeof(message), 0);
- 
-    printf("message inside read_db AFTER sending:\n"); fflush(stdout);
-        printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-                message.op, message.key, message.value_length, message.overwrite, message.error_code); 
-        fflush(stdout);
- 
+
     nbytes = send(socket_fd, entry->value, message.value_length, 0);
     if(nbytes != message.value_length) {
-        perror("send failed");
+        perror("read_db: send failed");
         return -1;
     }
- 
+
     return 0;
 }
  
@@ -171,28 +147,19 @@ int write_db(int socket_fd, kv_client2server message) {
     void * value;
     int err, nbytes;
  
-    //DEBUG
-    printf("\n\n---------------------WRITING------------------\n"); fflush(stdout);
- 
     value = malloc(message.value_length);//allocate the necessary space for the message value
  
     nbytes = recv(socket_fd, value , message.value_length , 0);//only read up to param value_length
-    //printf("after recv\n");fflush(stdout);
     if(nbytes != message.value_length) {
         perror("receive values failed");
         return -1;
     }
- 
-    //printf("Before addentry\n");fflush(stdout);
      
     message.error_code=add_entry(message.key, value, message.value_length, message.overwrite );
      
-    printf("after addentry: error_code=%d\n", message.error_code);fflush(stdout);
     nbytes = send(socket_fd, &message, sizeof(message), 0);
     if(nbytes != sizeof(message)) {
         perror("send failed");
-        //TODO: ver se é preciso fazer o join da thread -  ver slides
-        //pthread_exit(&kv_entry->value_length);
         return -1;
     }
 }
@@ -204,8 +171,7 @@ int delete_db(int socket_fd, kv_client2server message) {
     message.error_code = delete_entry(message.key);
  
     nbytes = send(socket_fd , &message, sizeof(message), 0);
-    if(nbytes!=sizeof(message))
-        return -1;
+    if(nbytes!=sizeof(message)) return -1;
     else return 0;
 }
  
@@ -255,6 +221,7 @@ int close_db(int socket_fd) {
 int main(){
  
     kv_client2server m;
+    int option = 1;
     int nbytes;
     struct sockaddr_in local_addr;
     struct sockaddr_in client_addr;
@@ -282,8 +249,10 @@ int main(){
     //err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
     if(err == -1) error_and_die("inet_aton");
     local_addr.sin_addr.s_addr = INADDR_ANY;
-     
- 
+    
+    //make socket immediatly available after it closes
+    setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEPORT | SO_REUSEADDR),(char*)&option,sizeof(option));
+
     /* bind socket */
     err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
     if(err == -1) error_and_die("bind");

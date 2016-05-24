@@ -2,7 +2,7 @@
 
 
 int kv_connect(char * kv_server_ip, int kv_server_port) {
-
+	int option = 1;
 	int socket_fd;
 	struct sockaddr_in server_addr;
 
@@ -11,6 +11,8 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 		perror("Creating socket");
 		return -1;
 	}
+
+	setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEPORT | SO_REUSEADDR),(char*)&option,sizeof(option));
 
 	/* fill struct */
 	server_addr.sin_family = AF_INET;
@@ -58,6 +60,12 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 		return -1;
 	}
 	
+	nbytes = recv(kv_descriptor, &message, sizeof(message), 0);
+	if(nbytes != sizeof(message)) {
+		perror("kv_write: receive error_code of msg failed");
+		return -1;
+	}
+
 	return 0;
 	
 }
@@ -90,41 +98,37 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 
 	printf("message inside kv_read BEFORE receiving size of value:\n"); fflush(stdout);
 	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-			message_global.op, message_global.key, message_global.value_length, message_global.overwrite, message_global.error_code); 
+			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
 	fflush(stdout);
 
-	printf("\nsocket_fd=%d\n", kv_descriptor);fflush(stdout);
 	/* read size of message */
-
-	nbytes = recv(kv_descriptor, &message_global, sizeof(message_global), MSG_WAITALL);
-	if(nbytes != sizeof(message_global)) {
+	nbytes = recv(kv_descriptor, &message, sizeof(message), 0);
+	if(nbytes != sizeof(message)) {
 		perror("receive size of msg failed");
 		return -1;
 	}
 
 	printf("message inside kv_read AFTER receiving size of value:\n"); fflush(stdout);
 	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
-			message_global.op, message_global.key, message_global.value_length, message_global.overwrite, message_global.error_code); 
+			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
 	fflush(stdout);
 	
 	//If the values does not exist in dictionary
-	if(message_global.error_code == -2){
-		//free(message_recv);
+	if(message.error_code == -2){
+		perror("value does not exist in dictionary\n");
 		return -2;
 	}
 
 	/* read message */
-	int real_length = message_global.value_length > value_length ? value_length : message_global.value_length;
-	nbytes = recv(kv_descriptor, (void *)value , real_length, 0);//only read up to param value_length
+	nbytes = recv(kv_descriptor, (void *)value , message.value_length, 0);//only read up to param value_length
 	
 	//check length received
-	if(nbytes != real_length) {
-		//free(message_recv);
+	if(nbytes != message.value_length) {
 		perror("receive values failed");
 		return -1;
 	}
 
-	printf("message:  value=%s\n", value); fflush(stdout);
+	printf("message value=%s\n", value); fflush(stdout);
 
 	//free(message_recv);
 	return 0;
@@ -145,6 +149,10 @@ int kv_delete(int kv_descriptor, uint32_t key) {
 	
 	kv_client2server message;
 	message.op='d';
+	message.key=key;
+	message.value_length = 0;
+	message.overwrite = 0;
+	message.error_code = 0;
 	
 	//send order
 	int nbytes = send(kv_descriptor, &message, sizeof(message), 0);
@@ -159,7 +167,7 @@ int kv_delete(int kv_descriptor, uint32_t key) {
 
 	if(message.error_code != 0) {
 		perror("delete failed");
-		return message.error_code;
+		return -1;
 	}
 
 	return 0;	

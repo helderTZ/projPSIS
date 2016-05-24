@@ -12,10 +12,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-/*For the use of inet_aton*/
-//#define _BSD_SOURCE
-//#define _XOPEN_SOURCE 500
-/**************************/
 
 #define SOCK_ADDR "/tmp/sock_kv"
 #define PORT 9999
@@ -31,16 +27,6 @@ typedef struct kv_client2server {
 	char overwrite;
 	char error_code;
 }kv_client2server;
-
-kv_client2server message_global;
-
-
-/*typedef struct kv_read {
-	char op;
-	uint_32 key;
-	char * value;
-}kv_read;
-*/
 
 
 int kv_connect(char * kv_server_ip, int kv_server_port);

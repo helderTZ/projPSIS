@@ -108,6 +108,8 @@ int delete_entry(uint32_t key){
 	if (aux!=NULL){
 		aux->prev->next=aux->next;
 		aux->next->prev=aux->prev;
+		if(aux==database)//if the first node is deleted
+			database = aux->next;
 		free(aux->value);
 		free(aux);
 		return 0;
