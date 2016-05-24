@@ -101,13 +101,13 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
 	fflush(stdout);
 
-	/* read size of message */
+	//read size of message and error message
 	nbytes = recv(kv_descriptor, &message, sizeof(message), 0);
 	if(nbytes != sizeof(message)) {
 		perror("receive size of msg failed");
 		return -1;
 	}
-
+	
 	printf("message inside kv_read AFTER receiving size of value:\n"); fflush(stdout);
 	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
 			message.op, message.key, message.value_length, message.overwrite, message.error_code); 

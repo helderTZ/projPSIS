@@ -30,7 +30,6 @@ int main(){
 	printf("press enter to delete even values\n");
 	getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i +=2){
-			getchar();
 		kv_delete(kv, i);
 	}
 

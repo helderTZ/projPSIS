@@ -16,6 +16,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
  
+#define MSG_NOT_EXISTS -2
 kv_client2server message_thread;
  
 int read_db(int socket_fd, kv_client2server message);
@@ -121,21 +122,23 @@ int read_db(int socket_fd, kv_client2server message) {
  
     message.error_code=read_entry(message.key, &entry);
     printf("message error_code=%d\n", message.error_code);
-    if(entry->value_length > message.value_length)//message not entirely read
-        message.error_code=-3; 
-    else{
-        message.value_length=entry->value_length;
-    }
 
+    if (message.error_code!=MSG_NOT_EXISTS)
+        if(entry->value_length > message.value_length)//message not entirely read
+            message.error_code=-3; 
+        else{
+            message.value_length=entry->value_length;
+        }
     // send message header to client with real size of msg
     nbytes = send(socket_fd , &message, sizeof(message), 0);
 
-    nbytes = send(socket_fd, entry->value, message.value_length, 0);
-    if(nbytes != message.value_length) {
-        perror("read_db: send failed");
-        return -1;
+    if(message.error_code!=MSG_NOT_EXISTS){//only send message if it exists
+        nbytes = send(socket_fd, entry->value, message.value_length, 0);
+        if(nbytes != message.value_length) {
+            perror("read_db: send failed");
+            return -1;
+        }
     }
-
     return 0;
 }
  
