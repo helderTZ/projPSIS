@@ -13,14 +13,50 @@
 #include <signal.h>
 #include <pthread.h>
 
+struct pii {
+	int* shm;
+	char** envp;
+};
 
+void wake_dataserver(char** envp) {
 
-void signal_handler(int n) {
+	// Required for data-server
+	system("pwd > pwd.txt");
+	FILE *f_pwd = fopen("pwd.txt", "r");
+	char pwd[100];
+	fscanf(f_pwd, "%s", pwd);
+	sprintf(pwd, "%s/data-server", pwd);
+	printf("pwd: %s\n", pwd);
+	fclose(f_pwd);
 
+	int pid = fork();
+	if (pid == 0){
+		char* newarg[] = {pwd, "data-server", NULL};
+		execve("data-server", newarg, envp);
+	}
 
 }
 
 
+void* manage_heartbeat(void *arg) {
+
+	struct pii args = *(struct pii*)arg;
+	int  *shm 	= args.shm;
+	char **envp = args.envp;
+
+	int heartbeat=1;
+	while(heartbeat){
+		*shm=1;
+		sleep(10);
+		if(*shm==1)
+			heartbeat=0;
+		else{
+			wait();
+			wake_dataserver( envp );
+		}
+	}
+
+}
 
 
 void error_and_die(const char *msg) {
@@ -42,116 +78,92 @@ int main(int argc, char *argv[], char *envp[]){
 	int backlog;
 	pid_t pid;
 
-	//Shared Memory;
+	// Shared Memory;
 	int shmid;
     key_t key;
     int *shm;
-    int heartbeat=1;
+
+    //Socket stuff
+    int option=1;
 
 
-	//for the fork+execve
-	system("pwd > pwd.txt");
-	FILE *f_pwd = fopen("pwd.txt", "r");
-	char pwd[100];
-	fscanf(f_pwd, "%s", pwd);
-	sprintf(pwd, "%s/data-server", pwd);
-	printf("pwd: %s\n", pwd);
-	fclose(f_pwd);
-
-	//Shared memory init***************************
-	/*
-     * We'll name our shared memory segment
-     * "1234".
-     */
-    key = 1234;
-
-    /*
-     * Create the segment.
-     */
-    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
-
-    /*
-     * Now we attach the segment to our data space.
-     */
-    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
-    
-  	//*************************************************
-  	while(1){
-		pid=fork();
-		printf("pid=%d\n",pid);
-		if (pid==0){
-			char* newarg[] = {pwd, "data-server", NULL};
-			execve("data-server", newarg, envp);
-	    }else {
-
-	    	printf("blahblahblah\n");
-	    	heartbeat=1;
-	    	while(heartbeat){
-	    		*shm=1;
-	    		sleep(10);
-	    		if(*shm==1)
-	    			heartbeat=0;
-	    	}
-	    	wait();
-	    }
+	//------------------ Socket creation -------------------
+	// create socket
+	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("socket");
+		exit(-1);
 	}
 
+	local_addr.sin_family = AF_INET;
+	local_addr.sin_port = htons(PORT);
+	//err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
+	if(err == -1) {
+		perror("inet_aton");
+		exit(-1);
+	}
+	local_addr.sin_addr.s_addr = INADDR_ANY;
 	
-	exit(0);
-}
-    	/*
-	
-		// create socket
-		if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-			perror("socket");
+	//make socket immediatly available after it closes
+    setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEPORT | SO_REUSEADDR),(char*)&option,sizeof(option));
+
+	// bind socket
+	err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
+	if(err == -1) {
+		perror("bind");
+		exit(-1);
+	}
+
+	// listen
+	err = listen(socket_fd, backlog);
+	if(err == -1) {
+		perror("listen");
+		exit(-1);
+	}
+
+
+	//---------------- Shared memory init ------------------
+
+	//We'll name our shared memory segment "1234".
+    key = 1234;
+
+    //Create the segment.
+    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
+
+    //Now we attach the segment to our data space.
+    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
+
+
+    //----------------------- launch data-server --------------------
+    wake_dataserver(envp);
+
+    //--------------------------- heartbeat -------------------------
+    struct pii args;
+    args.shm = shm;
+    args.envp = envp;
+	pthread_create( &tid, NULL, manage_heartbeat, (void *)(&args) );
+
+
+
+  	while(1){
+
+    	//----------------------- manage client connections ---------------
+  		/*
+    	int local_addr_size = sizeof(local_addr);
+		int client_addr_size = sizeof(client_addr);
+
+		printf("before accept\n");
+		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
+		if(new_socket == 0) {
+			perror("socket accept");
 			exit(-1);
 		}
+		*/
 
-		local_addr.sin_family = AF_INET;
-		local_addr.sin_port = htons(PORT);
-		//err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
-		if(err == -1) {
-			perror("inet_aton");
+		/*printf("after accept sck=%d\n", new_socket);
+		err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
+		if(err!=0) {
+			perror("pthread_create");
 			exit(-1);
-		}
-		local_addr.sin_addr.s_addr = INADDR_ANY;
-		
-
-		// bind socket
-		err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
-		if(err == -1) {
-			perror("bind");
-			exit(-1);
-		}
-
-		// listen
-		err = listen(socket_fd, backlog);
-		if(err == -1) {
-			perror("listen");
-			exit(-1);
-		}
-
-
-
-		while(1) {
-			int local_addr_size = sizeof(local_addr);
-			int client_addr_size = sizeof(client_addr);
-
-			
-	    	printf("before accept\n");
-			new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
-			if(new_socket == 0) {
-				perror("socket accept");
-				exit(-1);
-			}
-
-			printf("after accept sck=%d\n", new_socket);
-			err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
-			if(err!=0) {
-				perror("pthread_create");
-				exit(-1);
-			}
-
 		}*/
-
-
+	}
+}

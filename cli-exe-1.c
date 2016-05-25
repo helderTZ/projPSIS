@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_VALUES 100
+#define MAX_VALUES 10
 
 int main(){
 
