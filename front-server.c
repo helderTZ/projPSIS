@@ -15,14 +15,19 @@
 
 
 
+void signal_handler(int n) {
+
+
+}
+
+
+
+
 void error_and_die(const char *msg) {
   perror(msg);
   exit(EXIT_FAILURE);
 }
 
-
-
-//TODO: tratar do CTRL+C
 
 int main(int argc, char *argv[], char *envp[]){
 
@@ -43,6 +48,8 @@ int main(int argc, char *argv[], char *envp[]){
     int *shm;
     int heartbeat=1;
 
+
+	//for the fork+execve
 	system("pwd > pwd.txt");
 	FILE *f_pwd = fopen("pwd.txt", "r");
 	char pwd[100];

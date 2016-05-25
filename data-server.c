@@ -28,13 +28,19 @@ int close_db(int);
  
  
 //TODO: transformar o log num backup periodicamente, por exemplo, no principio e no fim
-/*void log() {
+void updateBackup() {
  
-    fopen(LOG_FILE, "a");
+    FILE *fp = fopen(LOG_FILE, "a");
      
-    fclose(LOG_FILE);
+    fclose(fp);
  
-}*/
+}
+
+void signal_handler(int n) {
+
+    updateBackup();
+    
+}
 
 
 void error_and_die(const char *msg) {
@@ -220,6 +226,7 @@ int close_db(int socket_fd) {
     return 0;
  
 }*/
+
  
 int main(){
  
@@ -243,6 +250,13 @@ int main(){
      
     /* initialisation */
     dictionary_init();
+
+    /* set handler for signal SIGINT */
+    struct sigaction new_action;
+    new_action.sa_handler = signal_handler;
+    sigemptyset (&new_action.sa_mask);
+    new_action.sa_flags = 0;
+    sigaction (SIGINT, &new_action, NULL);
      
     /* create socket  */
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) error_and_die("socket");

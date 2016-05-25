@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_VALUES 10
+#define MAX_VALUES 100
 
 int main(){
 
@@ -14,6 +14,7 @@ int main(){
 		exit(-1);
 	}
 
+	printf("\nwriting first values...\n");
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);
 		kv_write(kv, i , linha, strlen(linha)+1, 0);
@@ -36,12 +37,14 @@ int main(){
 	printf("press enter to read values\n");
 	getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
-		getchar();
 		if(kv_read(kv, i , linha, 100) == 0){
-			printf ("key - %10u value %s", i, linha);
+			printf ("key - %10u value %s\n", i, linha);
+		}else {
+			printf("key - %10u does not exist in dictionary\n", i);
 		}
 	}
 
+	printf("\nwriting new values...\n");
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i*10);
 		kv_write(kv, i , linha, strlen(linha)+1, 0); /* will not overwrite*/
@@ -51,7 +54,7 @@ int main(){
 	getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
-			printf ("key - %10u value %s", i, linha);
+			printf ("key - %10u value %s\n", i, linha);
 		}
 	}
 	kv_close(kv);
