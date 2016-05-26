@@ -33,5 +33,8 @@ int read_entry(uint32_t key, dictionary ** entry);
 void printList();
 int create_backup(const char * file_name);
 int read_backup(const char * file_name);
+int log_init (const char * file_name, const char * mode);
+int read_log();
+int close_log();
 
 #endif

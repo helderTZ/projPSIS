@@ -15,5 +15,5 @@ client-par :
 clean:
 	rm -f *.o *.out data-server front-server client_single client_par
 
-clean-files:
+clean files:
 	rm -f *.bin
