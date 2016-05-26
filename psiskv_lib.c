@@ -37,8 +37,6 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 		return -1;
 	}
 
-	printf("befor closing socket = %d\n", socket_fd); fflush(stdout);
-
 	//closing front-server's  connection
 	if(close(socket_fd) == -1) {
 		perror("closing socket");
@@ -59,8 +57,6 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
  		perror("inet_aton");
 		return -1;
 	}
-
-	printf("after closing socket = %d\n", socket_fd); fflush(stdout);
 
 	/* connect */
 	err = connect(socket_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
@@ -176,7 +172,21 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 	
 }
 
-void kv_close(int kv_descriptor) {
+int kv_close(int kv_descriptor) {
+
+	kv_client2server message;
+	message.op = 'c';	// close operation
+	message.key = 0;
+	message.value_length = 0;//quanto se quer ler desta key
+	message.overwrite = 0;
+	message.error_code = 0;
+
+	int nbytes = send(kv_descriptor, &message, sizeof(message), 0);
+	
+	if(nbytes != sizeof(message)) {
+		perror("kv_close: send failed");
+		return -1;
+	}
 
 	if(close(kv_descriptor) == -1) {
 		perror("closing socket");

@@ -31,5 +31,7 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 int delete_entry(uint32_t key);
 int read_entry(uint32_t key, dictionary ** entry);
 void printList();
+int create_backup(const char * file_name);
+int read_backup(const char * file_name);
 
 #endif
