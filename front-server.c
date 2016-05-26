@@ -18,10 +18,14 @@ struct pii {
 	char** envp;
 };
 
+int dataserver_port = INITIAL_PORT;
+
 void* manage_client(void *arg) {
 
 	int socket_fd = *((int*) arg);
-	int dataserver_port = DATA_PORT;
+
+	printf("FRONT-SERVER: dataserver_port=%d\n", dataserver_port); fflush(stdout);
+	printf("FRONT-SERVER: INITIAL_PORT=%d\n", INITIAL_PORT); fflush(stdout);
 
 	//send data-server's port number to client
 	int nbytes = send(socket_fd , &dataserver_port, sizeof(int), 0);
@@ -99,7 +103,7 @@ int main(int argc, char *argv[], char *envp[]){
 
     //Socket stuff
     int option=1;
-    int dataserver_port = DATA_PORT;
+    int dataserver_port;
 
 
 	//----------------------- Shared memory init --------------------
@@ -127,6 +131,14 @@ int main(int argc, char *argv[], char *envp[]){
 	pthread_create( &tid, NULL, manage_heartbeat, (void *)(&args) );
 
 
+
+	/*
+	//------------------------ Create FIFO -------------------------
+    int fifo;
+    unlink(KV_FIFO);	// delete fifo if it already exists
+    mkfifo(KV_FIFO, S_IFIFO | 0666);	// create fifo file
+    fifo = open(KV_FIFO, O_RDONLY );	// open fifo for reading
+	*/
 
 
 
@@ -169,18 +181,22 @@ int main(int argc, char *argv[], char *envp[]){
 	int client_addr_size = sizeof(client_addr);
 
 
+
   	while(1){
 
     	//----------------------- manage client connections ---------------
+
+    	//read(fifo, &dataserver_port, sizeof(int));
+
   		
-		printf("before accept\n");
+		printf("FRONT-SERVER: before accept\n");
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
 		if(new_socket == 0) {
 			perror("socket accept");
 			exit(-1);
 		}
 
-		printf("after accept sck=%d\n", new_socket);
+		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);
 		err = pthread_create(&tid, NULL, manage_client, (void *) (&new_socket));
 		if(err!=0) {
 			perror("pthread_create");

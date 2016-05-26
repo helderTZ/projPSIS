@@ -1,9 +1,11 @@
 #include "database.h"
 
+
 #define DbInitSize 10
 
 dictionary * database;
 char isEmpty=1;
+extern pthread_mutex_t mutex;
 
 int dictionary_init(){
 	int i;
@@ -25,15 +27,21 @@ dictionary * find_entry(uint32_t key){
 	dictionary *aux = database;
 	int i=0;
 
+	pthread_t tid = pthread_self();
+
 	if(isEmpty) return NULL;
+
 
 	//Critical region
 	if(aux->key==key) return aux;
 
 	while(aux->next != database){
+		pthread_mutex_lock(&mutex);
 		aux = aux->next;
-		if(aux->key==key)
+		pthread_mutex_unlock(&mutex);
+		if(aux->key==key) {
 			return aux;
+		}
 	}
 	return NULL;
 }
@@ -44,32 +52,35 @@ dictionary * find_entry(uint32_t key){
 @return -1 if errors found
 ************************************************/
 int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite ){
+
 	dictionary *new_entry;
 	dictionary *entry_found;
 
-	//DEBUG
-	static int blahblah=0;
+	pthread_t tid = pthread_self();
 
+
+	pthread_mutex_lock(&mutex);
 	if(isEmpty) {
 		database->key = key;
 		database->value = value;
 		database->value_length = value_length;
 		isEmpty = 0;
 	}
+	pthread_mutex_unlock(&mutex);
 
 	entry_found=find_entry(key);
 	if(entry_found!=NULL){//if entry exists
 		
 		if (overwrite){
-			//printf("Inside overwrite %d\n", blahblah++); fflush(stdout);
+			pthread_mutex_lock(&mutex);
 			free(entry_found->value);
 			entry_found->value_length=value_length;//refresh value lenght
-			//entry_found->value = malloc(value_length);//allocate memory for the new value size
 			entry_found->value = value;
-			//memcpy(entry_found->value,value,value_length);
+			pthread_mutex_unlock(&mutex);
 			return 0;
-		}else//if already exists and not overwrite -> do nothing
+		}else {//if already exists and not overwrite -> do nothing
 			return -2;
+		}
 
 	}else{//add new entry
 		isEmpty=0;
@@ -77,13 +88,14 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		new_entry = (dictionary *) malloc(sizeof(dictionary));
 		new_entry->value = value;
 		
+		pthread_mutex_lock(&mutex);
 		new_entry->prev=database->prev;
 		new_entry->next=database;//new entry next point to first entry
 		database->prev->next=new_entry;//new entry point to the last entry
 		database->prev=new_entry;//1st entry prev point to last entry
 		new_entry->key=key;
-		//memcpy(new_entry->value,value,value_length);
 		new_entry->value_length=value_length;
+		pthread_mutex_unlock(&mutex);
 		return 0;
 	}
 		return -1;
@@ -95,17 +107,27 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 @return -1 if error ocurred
 */
 int delete_entry(uint32_t key){
+
+	pthread_t tid = pthread_self();
+
+
 	dictionary *aux;
 	aux=find_entry(key);
+	//printList();
+	//printf("deleteing key %d\n", aux->key); fflush(stdout);
 	if (aux!=NULL){
+		pthread_mutex_lock(&mutex);
 		aux->prev->next=aux->next;
 		aux->next->prev=aux->prev;
 		if(aux==database)//if the first node is deleted
 			database = aux->next;
 		free(aux->value);
 		free(aux);
-		return 0;
-	}else return -1;
+		pthread_mutex_unlock(&mutex);
+		return 0;		
+	}else{
+		return -1;
+	} 
 }
 
 /* 
@@ -116,14 +138,20 @@ Warning: Do not forget to free the memory after read_entry function
 @return -1 if error ocurred
 */
 int read_entry(uint32_t key, dictionary ** entry){
+
+	pthread_t tid = pthread_self();
+
 	dictionary *aux;
 	aux = find_entry(key);
 	if(aux!=NULL){
 		*entry = (dictionary*) malloc(sizeof(dictionary));
+		//pthread_mutex_lock(&mutex);
 		memcpy(*entry, aux, sizeof(dictionary));
+		//pthread_mutex_unlock(&mutex);
 		return 0;
-	}else return -2;
-	
+	}else{
+		return -2;
+	}
 	return -1;
 
 }
@@ -149,14 +177,14 @@ int create_backup(const char * file_name){
 	fwrite(&(aux->key),sizeof(uint32_t),1,fp);//write key and value length
 	fwrite(&(aux->value_length),sizeof(uint32_t),1,fp);
 	fwrite(aux->value,aux->value_length,1,fp);//rite value
-	printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
+	//printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
 
     while(aux->next!=database) {
 		aux = aux->next;
 		fwrite(&(aux->key),sizeof(uint32_t),1,fp);//write key and value length
 		fwrite(&(aux->value_length),sizeof(uint32_t),1,fp);
 		fwrite(aux->value,aux->value_length,1,fp);//rite value
-		printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
+		//printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
 	}
 	fclose(fp);
 	return 0;
@@ -177,7 +205,7 @@ int read_backup(const char * file_name){
     int nbytes;
 
     while(1) {
-    	printf("inside while\n");
+    	//printf("inside while\n");
 		nbytes = fread(&(aux.key),sizeof(uint32_t),1,fp);//write key and value length
 		if(nbytes!=1){
 			printf("fread key reached eof\n"); 
@@ -188,16 +216,17 @@ int read_backup(const char * file_name){
 			printf("fread value_length reached eof\n"); 
 			break;
 		}
-		printf("key = %d\tvalue length = %d\n", aux.key, aux.value_length);
+		//printf("key = %d\tvalue length = %d\n", aux.key, aux.value_length);
 		temp_value = malloc(aux.value_length);
 		nbytes = fread(temp_value,aux.value_length,1,fp);//read value
 		if(nbytes!=1){
 			printf("fread value reached eof\n"); 
 			break;
 		}
-		printf("value=%c\n", *(char *)temp_value);
+		//printf("value=%c\n", *(char *)temp_value);
 		aux.value=temp_value;
-		printf("returned value from add_entry=%d\n", add_entry(aux.key, aux.value, aux.value_length, 1));	
+		int err = add_entry(aux.key, aux.value, aux.value_length, 1);
+		//printf("returned value from add_entry=%d\n", err);	
 	}
 
 	fclose(fp);

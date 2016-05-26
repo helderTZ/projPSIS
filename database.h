@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <pthread.h>
 
+pthread_mutex_t mutex;
 
 typedef struct dictionary_entry{
 	uint32_t key;

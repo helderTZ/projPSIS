@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_VALUES 50
+#define MAX_VALUES 10
 
 int main(){
 
@@ -17,6 +17,7 @@ int main(){
 	printf("\nwriting first values...\n");
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);
+		printf("writing key %d with value %s\n", i, linha);
 		kv_write(kv, i , linha, strlen(linha)+1, 0);
 	}
 
@@ -30,7 +31,8 @@ int main(){
 
 	printf("press enter to delete even values\n");
 	getchar();
-	for (uint32_t i = 0; i < MAX_VALUES; i +=2){
+	for (uint32_t i = 0; i < MAX_VALUES; i +=2){		
+		printf("deleting key %d\n", i);
 		kv_delete(kv, i);
 	}
 
@@ -47,6 +49,7 @@ int main(){
 	printf("\nwriting new values...\n");
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		sprintf(linha, "%u", i*10);
+		printf("writing key %d with value %s\n", i, linha);
 		kv_write(kv, i , linha, strlen(linha)+1, 0); /* will not overwrite*/
 	}
 

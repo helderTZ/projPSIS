@@ -58,6 +58,8 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 		return -1;
 	}
 
+	printf("socket=%d, port=%d\n", socket_fd, dataserver_port); fflush(stdout);
+
 	/* connect */
 	err = connect(socket_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
 	if (err == -1){

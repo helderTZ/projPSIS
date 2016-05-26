@@ -1,4 +1,4 @@
-all : clean client-single front-server data-server
+all : clean client-single client-par front-server data-server
 
 data-server : 
 	gcc  -o data-server data-server.c database.c -lpthread -g 
