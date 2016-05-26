@@ -28,17 +28,17 @@ int close_db(int);
  
  
 //TODO: transformar o log num backup periodicamente, por exemplo, no principio e no fim
-void updateBackup() {
+/*void updateBackup() {
  
     FILE *fp = fopen(LOG_FILE, "a");
      
     fclose(fp);
  
-}
+}*/
 
 void signal_handler(int n) {
 
-    updateBackup();
+    //updateBackup();
     
 }
 
@@ -101,16 +101,18 @@ void * handle_requests(void* arg) {
         }
  
         if(message_thread.op == 'c') {
-            close_db(socket_fd);
-            // break out of loop if client wants t oclose connection
-            break;
+            printf("Inside close op\n");
+            if(close_db(socket_fd)!=0)
+                error_and_die("close_db failed\n");
+            break;// break out of loop if client wants to close connection
         }
          
  
     }//end while
      
     // terminate this thread
-    //pthread_exit();
+    printf("before exit handle_requests\n");
+    exit(0);
      
 }//end handle_requests
  
@@ -186,6 +188,7 @@ int delete_db(int socket_fd, kv_client2server message) {
  
  
 int close_db(int socket_fd) {
+    if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     return close(socket_fd);
 }
  
@@ -250,13 +253,27 @@ int main(){
      
     /* initialisation */
     dictionary_init();
-
+    if(read_backup("backup_teste.bin")==-1) printf("Backup not exists\n");
+    printList();
     /* set handler for signal SIGINT */
     struct sigaction new_action;
     new_action.sa_handler = signal_handler;
     sigemptyset (&new_action.sa_mask);
     new_action.sa_flags = 0;
     sigaction (SIGINT, &new_action, NULL);
+     
+    
+    //Shared memory init***************************
+    /*
+     * Create the segment.
+     */
+    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
+
+    /*
+     * Now we attach the segment to our data space.
+     */
+    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
+    //********************************************************
      
     /* create socket  */
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) error_and_die("socket");
@@ -278,17 +295,6 @@ int main(){
     err = listen(socket_fd, backlog);
     if(err == -1) error_and_die("listen");
 
-	//Shared memory init***************************
-	/*
-	 * Create the segment.
-	 */
-	if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
-
-	/*
-	 * Now we attach the segment to our data space.
-	 */
-	if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
-	//********************************************************
 
     err = pthread_create(&tid, NULL, heartbeat_thread,(void *) shm);
     if(err!=0) error_and_die("pthread_create heartbeat");

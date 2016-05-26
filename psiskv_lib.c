@@ -136,7 +136,21 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 	
 }
 
-void kv_close(int kv_descriptor) {
+int kv_close(int kv_descriptor) {
+
+	kv_client2server message;
+	message.op = 'c';	// close operation
+	message.key = 0;
+	message.value_length = 0;//quanto se quer ler desta key
+	message.overwrite = 0;
+	message.error_code = 0;
+
+	int nbytes = send(kv_descriptor, &message, sizeof(message), 0);
+	
+	if(nbytes != sizeof(message)) {
+		perror("kv_close: send failed");
+		return -1;
+	}
 
 	if(close(kv_descriptor) == -1) {
 		perror("closing socket");
