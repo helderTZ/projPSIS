@@ -14,7 +14,8 @@
 #include <fcntl.h>
 
 #define SOCK_ADDR "/tmp/sock_kv"
-#define PORT 9999
+#define FRONT_PORT 9999
+#define DATA_PORT 20000
 #define LOG_FILE "/tmp/log.txt"
 #define BACKUP_FILE "/tmp/backup.bin"
 

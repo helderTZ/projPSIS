@@ -18,6 +18,20 @@ struct pii {
 	char** envp;
 };
 
+void* manage_client(void *arg) {
+
+	int socket_fd = *((int*) arg);
+	int dataserver_port = DATA_PORT;
+
+	//send data-server's port number to client
+	int nbytes = send(socket_fd , &dataserver_port, sizeof(int), 0);
+	if(nbytes!=sizeof(int)) {
+		perror("sending port number to client");
+		return;
+	}
+
+}
+
 void wake_dataserver(char** envp) {
 
 	// Required for data-server
@@ -85,9 +99,39 @@ int main(int argc, char *argv[], char *envp[]){
 
     //Socket stuff
     int option=1;
+    int dataserver_port = DATA_PORT;
 
 
-	//------------------ Socket creation -------------------
+	//----------------------- Shared memory init --------------------
+
+	//We'll name our shared memory segment "1234".
+    key = 1234;
+
+    //Create the segment.
+    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
+
+    //Now we attach the segment to our data space.
+    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
+
+
+
+    //----------------------- launch data-server --------------------
+    wake_dataserver(envp);
+
+
+
+    //--------------------------- heartbeat -------------------------
+    struct pii args;
+    args.shm = shm;
+    args.envp = envp;
+	pthread_create( &tid, NULL, manage_heartbeat, (void *)(&args) );
+
+
+
+
+
+	//----------------------- Socket creation -----------------------
+
 	// create socket
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("socket");
@@ -95,7 +139,7 @@ int main(int argc, char *argv[], char *envp[]){
 	}
 
 	local_addr.sin_family = AF_INET;
-	local_addr.sin_port = htons(PORT);
+	local_addr.sin_port = htons(FRONT_PORT);
 	//err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
 	if(err == -1) {
 		perror("inet_aton");
@@ -121,49 +165,26 @@ int main(int argc, char *argv[], char *envp[]){
 	}
 
 
-	//---------------- Shared memory init ------------------
-
-	//We'll name our shared memory segment "1234".
-    key = 1234;
-
-    //Create the segment.
-    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
-
-    //Now we attach the segment to our data space.
-    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
-
-
-    //----------------------- launch data-server --------------------
-    wake_dataserver(envp);
-
-    //--------------------------- heartbeat -------------------------
-    struct pii args;
-    args.shm = shm;
-    args.envp = envp;
-	pthread_create( &tid, NULL, manage_heartbeat, (void *)(&args) );
-
+	int local_addr_size = sizeof(local_addr);
+	int client_addr_size = sizeof(client_addr);
 
 
   	while(1){
 
     	//----------------------- manage client connections ---------------
-  		/*
-    	int local_addr_size = sizeof(local_addr);
-		int client_addr_size = sizeof(client_addr);
-
+  		
 		printf("before accept\n");
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
 		if(new_socket == 0) {
 			perror("socket accept");
 			exit(-1);
 		}
-		*/
 
-		/*printf("after accept sck=%d\n", new_socket);
-		err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
+		printf("after accept sck=%d\n", new_socket);
+		err = pthread_create(&tid, NULL, manage_client, (void *) (&new_socket));
 		if(err!=0) {
 			perror("pthread_create");
 			exit(-1);
-		}*/
+		}
 	}
 }

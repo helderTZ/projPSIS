@@ -17,6 +17,16 @@
 #include <sys/shm.h>
  
 #define MSG_NOT_EXISTS -2
+#define AVAILABLE 1
+#define NOT_AVAILABLE 0
+#define TOTAL_PORTS 20000
+
+/*typedef struct ports {
+    int port;
+    char status;
+}s_ports;*/
+
+
 kv_client2server message_thread;
  
 int read_db(int socket_fd, kv_client2server message);
@@ -85,9 +95,9 @@ void * handle_requests(void* arg) {
         fflush(stdout);
  
         printf("Received message\n"); fflush(stdout);
-         
-         
- 
+        
+        
+
         if(message_thread.op == 'r') {
             read_db(socket_fd, message_thread);
         }
@@ -240,6 +250,13 @@ int main(){
     int new_socket;
     pthread_t tid;
     int backlog;
+    //s_ports available_ports[TOTAL_PORTS];
+
+    /*//initialise ports struct
+    for(int i=0; i<TOTAL_PORTS; i++) {
+        available_ports[i].port = TOTAL_PORTS+1;
+        available_ports[i].status = AVAILABLE;
+    }*/
 
     //Shared Memory;
 	int shmid;
@@ -262,7 +279,7 @@ int main(){
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) error_and_die("socket");
  
     local_addr.sin_family = AF_INET;
-    local_addr.sin_port = htons(PORT);
+    local_addr.sin_port = htons(DATA_PORT);
     //err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
     if(err == -1) error_and_die("inet_aton");
     local_addr.sin_addr.s_addr = INADDR_ANY;
@@ -292,9 +309,12 @@ int main(){
 
     err = pthread_create(&tid, NULL, heartbeat_thread,(void *) shm);
     if(err!=0) error_and_die("pthread_create heartbeat");
+
+
+    int client_addr_size = sizeof(client_addr);
  
     while(1) {
-        int client_addr_size = sizeof(client_addr);
+        
  		
         printf("waiting for accept...\n");
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);

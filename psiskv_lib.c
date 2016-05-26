@@ -5,6 +5,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 	int option = 1;
 	int socket_fd;
 	struct sockaddr_in server_addr;
+	int dataserver_port;
 
 	/* open socket */
 	if((socket_fd = socket(AF_INET, SOCK_STREAM, 0) )== -1) {
@@ -25,7 +26,46 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 	/* connect */
 	int err = connect(socket_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
 	if (err == -1){
-		perror("connect");
+		perror("connect 1");
+		return -1;
+	}
+
+	//receive data-server's port from front-server
+	int nbytes = recv(socket_fd, &dataserver_port, sizeof(int), 0);
+	if(nbytes != sizeof(int)) {
+		perror("kv_connect: receive port failed");
+		return -1;
+	}
+
+	printf("befor closing socket = %d\n", socket_fd); fflush(stdout);
+
+	//closing front-server's  connection
+	if(close(socket_fd) == -1) {
+		perror("closing socket");
+	}
+
+	/* open socket */
+	if((socket_fd = socket(AF_INET, SOCK_STREAM, 0) )== -1) {
+		perror("Creating socket");
+		return -1;
+	}
+
+	setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEPORT | SO_REUSEADDR),(char*)&option,sizeof(option));
+
+	/* fill struct */
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(dataserver_port);
+	if((inet_aton(kv_server_ip, &(server_addr.sin_addr))) == 0)  {
+ 		perror("inet_aton");
+		return -1;
+	}
+
+	printf("after closing socket = %d\n", socket_fd); fflush(stdout);
+
+	/* connect */
+	err = connect(socket_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
+	if (err == -1){
+		perror("connect 2");
 		return -1;
 	}
 
