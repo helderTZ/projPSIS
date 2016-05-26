@@ -24,7 +24,6 @@ typedef struct ports {
     char status;
 }s_ports;
 
-
 kv_client2server message_thread;
 extern pthread_mutex_t mutex;
 s_ports available_ports[TOTAL_PORTS];
@@ -46,20 +45,18 @@ int close_db(int);
  
 }*/
 
-void signal_handler(int n) {
-
-    //updateBackup();
-    
-}
-
-
 void error_and_die(const char *msg) {
   perror(msg);
   exit(EXIT_FAILURE);
 }
 
+void signal_handler(int n) {
 
- 
+    if(!close_log()) error_and_die("closing log_file\n");
+    //updateBackup();
+    
+}
+
 void * heartbeat_thread(void* arg) {
 	int * shm = (int *) arg;
 	while(1){
@@ -108,7 +105,6 @@ void * handle_requests(void* arg) {
         }
  
         if(message_thread.op == 'c') {
-            printf("Inside close op\n");
             if(close_db(socket_fd)!=0)
                 error_and_die("close_db failed\n");
             break;// break out of loop if client wants to close connection
@@ -124,19 +120,13 @@ void * handle_requests(void* arg) {
 }//end handle_requests
  
  
- 
- 
- 
- 
 int read_db(int socket_fd, kv_client2server message) {
 
     printf("---------------------------- READING --------------------\n"); fflush(stdout);
  
     dictionary * entry;
     int err, nbytes;
- 
-    //printList();
- 
+
     message.error_code=read_entry(message.key, &entry);
 
     if (message.error_code!=MSG_NOT_EXISTS)
@@ -204,7 +194,7 @@ int delete_db(int socket_fd, kv_client2server message) {
     else return 0;
 }
  
- 
+
 int close_db(int socket_fd) {
 
     printf("---------------------------- CLOSING --------------------\n"); fflush(stdout);
@@ -214,45 +204,6 @@ int close_db(int socket_fd) {
     if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     return close(socket_fd);
 }
- 
- 
- 
-/*int initialisation() {
- 
-    //TODO: ler backup e preencher o dictionary
-    //TODO: definir estrutura para guardar no backup, ex:
-    //          uma entry:  key
-    //                      value_length
-    //                      value
-     
-    dictionary kv_entry;
-         
-    FILE *backup_fptr = fopen(BACKUP_FILE, "rb");
-    if(backup_fptr == NULL)
-        return -1;
-     
-    while(feof(backup_fptr)) {
-         
-        // read key
-        fread(&(kv_entry->key), sizeof(int), 1, backup_fptr);
-         
-        // read value_length
-        fread(&(kv_entry->value_length), sizeof(int), 1, backup_fptr);
-         
-        // allocate memory for value
-        kv_entry->value = malloc(kv_entry->value_length);
-         
-        // read value
-        fread(kv_entry->value, 1, kv_entry->value_length, backup_fptr);
-         
-        // add entry to dictionary
-        add_entry(kv_entry);
-    }
-     
-    return 0;
- 
-}*/
-
  
 int main(){
  
@@ -289,8 +240,12 @@ int main(){
      
     /* initialisation */
     dictionary_init();
-    if(read_backup("backup_teste.bin")==-1) printf("Backup not exists\n");
-    printList();
+    if(read_backup("backup_teste.bin") < 0) printf("Backup not exists\n");
+    printf("after reading backup\n");
+    if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
+    if(read_log() < 0) printf("Error executing or empty log_file\n");
+    if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
+
 
     /* set handler for signal SIGINT */
     struct sigaction new_action;
@@ -363,7 +318,6 @@ int main(){
         client_addr_size = sizeof(client_addr);
  
     while(1){
-        
  		
         printf("DATA-SERVER: waiting for accept...\n");
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
