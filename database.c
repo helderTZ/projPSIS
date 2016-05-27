@@ -99,24 +99,26 @@ int read_log(){
 
 dictionary * find_entry(uint32_t key){
 	dictionary *aux = database;
+	dictionary *aux2;
 	int i=0;
 
 	pthread_t tid = pthread_self();
 
 	if(isEmpty) return NULL;
-
-
-	//Critical region
-	if(aux->key==key) return aux;
-
-	while(aux->next != database){
-		pthread_mutex_lock(&mutex);
-		aux = aux->next;
+	
+	pthread_mutex_lock(&mutex);
+	if(aux->key==key) {
 		pthread_mutex_unlock(&mutex);
+		return aux;
+	}
+	while(aux->next != database){
+		aux = aux->next;
 		if(aux->key==key) {
+			pthread_mutex_unlock(&mutex);
 			return aux;
 		}
 	}
+	pthread_mutex_unlock(&mutex);
 	return NULL;
 }
 
@@ -163,13 +165,13 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 
 		new_entry = (dictionary *) malloc(sizeof(dictionary));
 		new_entry->value = value;
+		new_entry->key=key;
+		new_entry->value_length=value_length;
 		pthread_mutex_lock(&mutex);
 		new_entry->prev=database->prev;
 		new_entry->next=database;//new entry next point to first entry
 		database->prev->next=new_entry;//new entry point to the last entry
 		database->prev=new_entry;//1st entry prev point to last entry
-		new_entry->key=key;
-		new_entry->value_length=value_length;
 		pthread_mutex_unlock(&mutex);
 
 		//if (!backing_up)
@@ -228,9 +230,9 @@ int read_entry(uint32_t key, dictionary ** entry){
 	aux = find_entry(key);
 	if(aux!=NULL){
 		*entry = (dictionary*) malloc(sizeof(dictionary));
-		//pthread_mutex_lock(&mutex);
+		pthread_mutex_lock(&mutex);
 		memcpy(*entry, aux, sizeof(dictionary));
-		//pthread_mutex_unlock(&mutex);
+		pthread_mutex_unlock(&mutex);
 		return 0;
 	}else{
 		return -2;
@@ -242,21 +244,29 @@ int read_entry(uint32_t key, dictionary ** entry){
 void printList() {//only for debug purpose
 
 	dictionary* aux = database;
+	pthread_mutex_lock(&mutex);
 	printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);
 	while(aux->next!=database) {
 		aux = aux->next;
 		printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
 	}
+	pthread_mutex_unlock(&mutex);
 }
 
 int write_file_entry(FILE *fp, dictionary * aux){
 	int nritems;
+	dictionary aux2;
+	
+	pthread_mutex_lock(&mutex);
+	memcpy(&aux2, aux, sizeof(dictionary));
+	memcpy(aux2.value, aux->value, aux->value_length);
+	pthread_mutex_unlock(&mutex);
 
 	//write key and value length
-	nritems = fwrite(&(aux->key),sizeof(uint32_t),1,fp); if(nritems!=1) return -1;
-	nritems = fwrite(&(aux->value_length),sizeof(uint32_t),1,fp); if(nritems!=1) return -1;
+	nritems = fwrite(&(aux2.key),sizeof(uint32_t),1,fp); if(nritems!=1) return -1;
+	nritems = fwrite(&(aux2.value_length),sizeof(uint32_t),1,fp); if(nritems!=1) return -1;
 	//write value
-	nritems = fwrite(aux->value,aux->value_length,1,fp); if(nritems!=1) return -1;
+	nritems = fwrite(aux2.value,aux2.value_length,1,fp); if(nritems!=1) return -1;
 	//printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
 	return 0;
 }
