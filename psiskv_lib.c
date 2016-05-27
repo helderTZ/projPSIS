@@ -194,7 +194,6 @@ int kv_close(int kv_descriptor) {
 	if(close(kv_descriptor) == -1) {
 		perror("closing socket");
 	}
-	unlink(SOCK_ADDR);
 
 }
 

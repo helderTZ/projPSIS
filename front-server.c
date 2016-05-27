@@ -22,7 +22,7 @@ int dataserver_port = INITIAL_PORT;
 
 void* manage_client(void *arg) {
 
-	int socket_fd = *((int*) arg);
+	int socket_fd = (int) arg;
 
 	printf("FRONT-SERVER: dataserver_port=%d\n", dataserver_port); fflush(stdout);
 	printf("FRONT-SERVER: INITIAL_PORT=%d\n", INITIAL_PORT); fflush(stdout);
@@ -94,7 +94,7 @@ int main(int argc, char *argv[], char *envp[]){
 	int socket_fd;
 	int new_socket;
 	pthread_t tid;
-	int backlog;
+	int backlog = 100;
 	pid_t pid;
 
 	// Shared Memory;
@@ -198,7 +198,7 @@ int main(int argc, char *argv[], char *envp[]){
 		}
 
 		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);
-		err = pthread_create(&tid, NULL, manage_client, (void *) (&new_socket));
+		err = pthread_create(&tid, NULL, manage_client, (void *) new_socket);
 		if(err!=0) {
 			perror("pthread_create");
 			exit(-1);

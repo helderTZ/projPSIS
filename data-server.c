@@ -67,10 +67,12 @@ void * heartbeat_thread(void* arg) {
  
 void * handle_requests(void* arg) {
  
-    int socket_fd = *((int*) arg);
+    int socket_fd = (int) arg;
     int nbytes;
     int aux;
     int i=0;
+    
+    printf("entered handle_requests socket = %d\n", socket_fd); fflush(stdout);
  
     while(1) {
          
@@ -114,7 +116,7 @@ void * handle_requests(void* arg) {
     }//end while
      
     // terminate this thread
-    //printf("before exit handle_requests\n");
+    printf("exiting handle_requests\n"); fflush(stdout);
     return NULL;
      
 }//end handle_requests
@@ -218,7 +220,7 @@ int main(){
     int socket_fd;
     int new_socket;
     pthread_t tid;
-    int backlog;
+    int backlog = 100;
 
     /*//initialise ports struct
     for(i=0; i<TOTAL_PORTS; i++) {
@@ -316,16 +318,20 @@ int main(){
 
 
         client_addr_size = sizeof(client_addr);
+        int dummy_socket;
  
     while(1){
  		
-        printf("DATA-SERVER: waiting for accept...\n");
+        printf("DATA-SERVER: waiting for accept...\n"); fflush(stdout);
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
         if(new_socket == 0) error_and_die("socket accept");
 
-        printf("socket=%d\n", new_socket); fflush(stdout);
+		printf("DATA-SERVER: accepted\n"); fflush(stdout);
+        //printf("socket=%d\n", new_socket); fflush(stdout);
+        
+        dummy_socket = new_socket;
 
-        err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
+        err = pthread_create(&tid, NULL, handle_requests, (void *) new_socket);
         if(err!=0)error_and_die("pthread_create");
     }
 

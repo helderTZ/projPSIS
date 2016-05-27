@@ -22,7 +22,7 @@ int dataserver_port = INITIAL_PORT;
 
 void* manage_client(void *arg) {
 
-	int socket_fd = *((int*) arg);
+	int socket_fd = (int) arg;
 
 	printf("FRONT-SERVER: dataserver_port=%d\n", dataserver_port); fflush(stdout);
 	printf("FRONT-SERVER: INITIAL_PORT=%d\n", INITIAL_PORT); fflush(stdout);
@@ -61,6 +61,7 @@ void* manage_heartbeat(void *arg) {
 	struct pii args = *(struct pii*)arg;
 	int  *shm 	= args.shm;
 	char **envp = args.envp;
+	int status;
 
 	int heartbeat=1;
 	while(heartbeat){
@@ -69,7 +70,7 @@ void* manage_heartbeat(void *arg) {
 		if(*shm==1)
 			heartbeat=0;
 		else{
-			wait();
+			wait(&status);
 			wake_dataserver( envp );
 		}
 	}
@@ -93,7 +94,7 @@ int main(int argc, char *argv[], char *envp[]){
 	int socket_fd;
 	int new_socket;
 	pthread_t tid;
-	int backlog;
+	int backlog = 100;
 	pid_t pid;
 
 	// Shared Memory;
@@ -160,7 +161,7 @@ int main(int argc, char *argv[], char *envp[]){
 	local_addr.sin_addr.s_addr = INADDR_ANY;
 	
 	//make socket immediatly available after it closes
-    setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEADDR),(char*)&option,sizeof(option));
+    //setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEADDR),(char*)&option,sizeof(option));
 
 	// bind socket
 	err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
@@ -197,7 +198,7 @@ int main(int argc, char *argv[], char *envp[]){
 		}
 
 		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);
-		err = pthread_create(&tid, NULL, manage_client, (void *) (&new_socket));
+		err = pthread_create(&tid, NULL, manage_client, (void *) new_socket);
 		if(err!=0) {
 			perror("pthread_create");
 			exit(-1);

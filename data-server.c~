@@ -67,10 +67,12 @@ void * heartbeat_thread(void* arg) {
  
 void * handle_requests(void* arg) {
  
-    int socket_fd = *((int*) arg);
+    int socket_fd = (int) arg;
     int nbytes;
     int aux;
     int i=0;
+    
+    printf("entered handle_requests socket = %d\n", socket_fd); fflush(stdout);
  
     while(1) {
          
@@ -114,7 +116,7 @@ void * handle_requests(void* arg) {
     }//end while
      
     // terminate this thread
-    //printf("before exit handle_requests\n");
+    printf("exiting handle_requests\n"); fflush(stdout);
     return NULL;
      
 }//end handle_requests
@@ -218,7 +220,7 @@ int main(){
     int socket_fd;
     int new_socket;
     pthread_t tid;
-    int backlog;
+    int backlog = 100;
 
     /*//initialise ports struct
     for(i=0; i<TOTAL_PORTS; i++) {
@@ -244,7 +246,7 @@ int main(){
     printf("after reading backup\n");
     //if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
     //if(read_log() < 0) printf("Error executing or empty log_file\n");
-    if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
+    //if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
 	
 
     /* set handler for signal SIGINT */
@@ -300,7 +302,7 @@ int main(){
         local_addr.sin_addr.s_addr = INADDR_ANY;
         
         //make socket immediatly available after it closes
-        setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEADDR),(char*)&option,sizeof(option));
+        //setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEADDR),(char*)&option,sizeof(option));
 
         /* bind socket */
         err = bind(socket_fd, (struct sockaddr*) &local_addr, sizeof(local_addr));
@@ -319,13 +321,14 @@ int main(){
  
     while(1){
  		
-        printf("DATA-SERVER: waiting for accept...\n");
+        printf("DATA-SERVER: waiting for accept...\n"); fflush(stdout);
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
         if(new_socket == 0) error_and_die("socket accept");
 
-        printf("socket=%d\n", new_socket); fflush(stdout);
+		printf("DATA-SERVER: accepted\n"); fflush(stdout);
+        //printf("socket=%d\n", new_socket); fflush(stdout);
 
-        err = pthread_create(&tid, NULL, handle_requests, (void *) (&new_socket));
+        err = pthread_create(&tid, NULL, handle_requests, (void *) new_socket);
         if(err!=0)error_and_die("pthread_create");
     }
 
