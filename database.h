@@ -17,8 +17,11 @@
 #include <signal.h>
 #include <pthread.h>
 
+//#define FREE(x) {printf("%p\n",x); fflush(stdout); free(x); x=NULL;}
+#define FREE(x) free(x);
+
 pthread_mutex_t mutex;
-pthread_mutex_t mutex_backup;
+pthread_mutex_t mutex_log;
 
 typedef struct dictionary_entry{
 	uint32_t key;

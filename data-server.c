@@ -26,6 +26,7 @@ typedef struct ports {
 
 kv_client2server message_thread;
 extern pthread_mutex_t mutex;
+extern FILE *log_fp;
 s_ports available_ports[TOTAL_PORTS];
  
 int read_db(int socket_fd, kv_client2server message);
@@ -51,6 +52,7 @@ void error_and_die(const char *msg) {
 }
 
 void signal_handler(int n) {
+    //if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
 
     if(!close_log()) error_and_die("closing log_file\n");
     //updateBackup();
@@ -116,8 +118,8 @@ void * handle_requests(void* arg) {
     }//end while
      
     // terminate this thread
-    printf("exiting handle_requests\n"); fflush(stdout);
-    return NULL;
+    printf("exiting handle_requests, socket= %d \n",socket_fd); fflush(stdout);
+    //return NULL;
      
 }//end handle_requests
  
@@ -242,11 +244,12 @@ int main(){
      
     /* initialisation */
     dictionary_init();
-    //if(read_backup("backup_teste.bin") < 0) printf("Backup not exists\n");
+    if(read_backup("backup_teste.bin") < 0) printf("Backup not exists\n");
     printf("after reading backup\n");
-    //if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
-    //if(read_log() < 0) printf("Error executing or empty log_file\n");
-    //if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
+    if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
+    if(read_log() < 0) printf("Error executing or empty log_file\n");
+    if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
+    if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
 	
 
     /* set handler for signal SIGINT */

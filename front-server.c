@@ -189,15 +189,14 @@ int main(int argc, char *argv[], char *envp[]){
 
     	//read(fifo, &dataserver_port, sizeof(int));
 
-  		
-		printf("FRONT-SERVER: before accept\n");
+		printf("FRONT-SERVER: before accept\n");fflush(stdout);
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
 		if(new_socket == 0) {
 			perror("socket accept");
 			exit(-1);
 		}
 
-		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);
+		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);fflush(stdout);
 		err = pthread_create(&tid, NULL, manage_client, (void *) new_socket);
 		if(err!=0) {
 			perror("pthread_create");

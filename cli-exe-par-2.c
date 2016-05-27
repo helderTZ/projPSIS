@@ -5,8 +5,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define MAX_VALUES 10
-#define FORKS 5
+#define MAX_VALUES 5
+#define FORKS 1
 
 int main(){
 	char linha[100];
