@@ -61,7 +61,6 @@ void* manage_heartbeat(void *arg) {
 	struct pii args = *(struct pii*)arg;
 	int  *shm 	= args.shm;
 	char **envp = args.envp;
-	int status;
 
 	int heartbeat=1;
 	while(heartbeat){
@@ -70,7 +69,7 @@ void* manage_heartbeat(void *arg) {
 		if(*shm==1)
 			heartbeat=0;
 		else{
-			wait(&status);
+			wait();
 			wake_dataserver( envp );
 		}
 	}

@@ -151,8 +151,8 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 			entry_found->value_length=value_length;//refresh value lenght
 			entry_found->value = value;
 			pthread_mutex_unlock(&mutex);
-			//if (!backing_up)
-				//if(write_log(entry_found, 'w', (char) overwrite) < 0) error_and_die_db("add_entry, overwrite entry, saving log\n");
+			if (!backing_up)
+				if(write_log(entry_found, 'w', (char) overwrite) < 0) error_and_die_db("add_entry, overwrite entry, saving log\n");
 			return 0;
 		}else {//if already exists and not overwrite -> do nothing
 			return -2;
@@ -172,8 +172,8 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		new_entry->value_length=value_length;
 		pthread_mutex_unlock(&mutex);
 
-		//if (!backing_up)
-			//if(write_log(new_entry, 'w',(char) overwrite) < 0) error_and_die_db("add_entry, new entry, saving log\n");
+		if (!backing_up)
+			if(write_log(new_entry, 'w',(char) overwrite) < 0) error_and_die_db("add_entry, new entry, saving log\n");
 		return 0;
 	}
 
@@ -201,8 +201,8 @@ int delete_entry(uint32_t key){
 		if(aux==database)//if the first node is deleted
 			database = aux->next;
 
-		//if (!backing_up)
-			//if(write_log(aux, 'd', 0) < 0) error_and_die_db("delete_entry, saving log\n");
+		if (!backing_up)
+			if(write_log(aux, 'd', 0) < 0) error_and_die_db("delete_entry, saving log\n");
 
 		free(aux->value);
 		free(aux);

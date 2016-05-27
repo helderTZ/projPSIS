@@ -244,7 +244,7 @@ int main(){
     printf("after reading backup\n");
     //if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
     //if(read_log() < 0) printf("Error executing or empty log_file\n");
-    //if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
+    if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
 	
 
     /* set handler for signal SIGINT */

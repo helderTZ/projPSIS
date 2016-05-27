@@ -1,10 +1,10 @@
 all : clean client-single client-par front-server data-server
 
 data-server : 
-	gcc  -o data-server data-server.c database.c -lpthread -g 
+	gcc  -o data-server data-server.c database.c -lpthread -std=gnu99 -g 
 
 front-server : 
-	gcc  -o front-server front-server.c database.c -lpthread -g 
+	gcc  -o front-server front-server.c database.c -lpthread -std=gnu99 -g 
 
 client-single : 
 	gcc  -o client_single cli-exe-1.c psiskv_lib.c -lpthread -std=gnu99 -g 

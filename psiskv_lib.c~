@@ -49,7 +49,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port) {
 		return -1;
 	}
 
-	setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEADDR),(char*)&option,sizeof(option));
+	setsockopt(socket_fd,SOL_SOCKET,(SO_REUSEPORT | SO_REUSEADDR),(char*)&option,sizeof(option));
 
 	/* fill struct */
 	server_addr.sin_family = AF_INET;

@@ -18,7 +18,6 @@
 #include <pthread.h>
 
 pthread_mutex_t mutex;
-pthread_mutex_t mutex_backup;
 
 typedef struct dictionary_entry{
 	uint32_t key;
