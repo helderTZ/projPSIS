@@ -24,7 +24,7 @@ typedef struct ports {
     char status;
 }s_ports;
 
-kv_client2server message_thread;
+
 extern pthread_mutex_t mutex;
 extern FILE *log_fp;
 s_ports available_ports[TOTAL_PORTS];
@@ -74,7 +74,7 @@ void * handle_requests(void* arg) {
     int nbytes;
     int aux;
     int i=0;
-    
+    kv_client2server message_thread;
     printf("entered handle_requests socket = %d\n", socket_fd); fflush(stdout);
  
     while(1) {
@@ -174,7 +174,6 @@ int write_db(int socket_fd, kv_client2server message) {
     printf("received value = %s\n", (char*)value); fflush(stdout);
      
     message.error_code = add_entry(message.key, value, message.value_length, message.overwrite );
-
 
     printf("added key = %d value = %s error_code = %d\n", message.key, (char*)value, message.error_code); fflush(stdout);
     

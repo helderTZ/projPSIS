@@ -46,20 +46,16 @@ int log_init (const char * file_name, const char * mode){
 
 int write_log(dictionary *arg_aux, char op, char overwrite){
 	dictionary aux;
-	//printf("1log_fp=%p\n", log_fp);fflush(stdout);
+
 	pthread_mutex_lock(&mutex);
 	aux=*arg_aux;
-	//printf("2log_fp=%p\n", log_fp);fflush(stdout);
 	aux.value = malloc(aux.value_length);
-	//printf("3log_fp=%p\n", log_fp);fflush(stdout);
 	memcpy(aux.value, arg_aux->value, aux.value_length);
-	//printf("4log_fp=%p\n", log_fp);fflush(stdout);
 	pthread_mutex_unlock(&mutex);
+	
 	//write operation
-	//printf("5log_fp=%p\n", log_fp);fflush(stdout);
 	printf("write_log:\nop=%c overwrite=%d aux.key=%d\n", op, overwrite, aux.key);fflush(stdout);
 	pthread_mutex_lock(&mutex_log);
-	//printf("6log_fp=%p\n", log_fp);
 	int nritems = fwrite(&op,sizeof(char),1,log_fp); if(nritems!=1) error_and_die_db("write_log op failed\n");
 	nritems = fwrite(&overwrite,sizeof(char),1,log_fp); if(nritems!=1) error_and_die_db("write_log overwrite failed\n");
 	
@@ -122,26 +118,20 @@ dictionary * find_entry(uint32_t key){
 	dictionary *aux2;
 	int i=0;
 
-	pthread_t tid = pthread_self();
-
 	if(isEmpty) return NULL;
 
 	//Critical region
-	pthread_mutex_lock(&mutex);
 	if(aux->key==key){
-		pthread_mutex_unlock(&mutex);
 		return aux;
 	}
 
 	while(aux->next != database){
 		aux = aux->next;
 		if(aux->key==key) {
-			pthread_mutex_unlock(&mutex);
 			return aux;
 		}
 		
 	}
-	pthread_mutex_unlock(&mutex);
 	return NULL;
 }
 
@@ -154,9 +144,6 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 
 	dictionary *new_entry;
 	dictionary *entry_found;
-
-	pthread_t tid = pthread_self();
-
 
 	if(isEmpty) {
 		pthread_mutex_lock(&mutex);
@@ -174,8 +161,10 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		return 0;
 	}
 
-
+	pthread_mutex_lock(&mutex);
 	entry_found=find_entry(key);
+	pthread_mutex_unlock(&mutex);
+
 	if(entry_found!=NULL){//if entry exists
 		
 		if (overwrite){
@@ -190,6 +179,7 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 			#endif
 			return 0;
 		}else {//if already exists and not overwrite -> do nothing
+			FREE(value);
 			return -2;
 		}
 
@@ -230,7 +220,9 @@ int delete_entry(uint32_t key){
 
 	dictionary *aux;
 	pthread_mutex_lock(&mutex_delete);
+	pthread_mutex_lock(&mutex);
 	aux=find_entry(key);
+	pthread_mutex_unlock(&mutex);
 	//printList();
 	//printf("deleteing key %d\n", aux->key); fflush(stdout);
 	if (aux!=NULL){
@@ -269,16 +261,18 @@ int read_entry(uint32_t key, dictionary ** entry){
 	pthread_t tid = pthread_self();
 
 	dictionary *aux;
+	pthread_mutex_lock(&mutex);
 	aux = find_entry(key);
 	if(aux!=NULL){
 		*entry = (dictionary*) malloc(sizeof(dictionary));
-		pthread_mutex_lock(&mutex);
 		memcpy(*entry, aux, sizeof(dictionary));
 		pthread_mutex_unlock(&mutex);
 		return 0;
 	}else{
+		pthread_mutex_unlock(&mutex);
 		return -2;
 	}
+	pthread_mutex_unlock(&mutex);
 	return -1;
 
 }

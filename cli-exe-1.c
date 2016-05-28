@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 
-#define MAX_VALUES 10
+#define MAX_VALUES 100
 
 int main(){
 
