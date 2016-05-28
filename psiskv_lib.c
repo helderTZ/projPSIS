@@ -195,6 +195,8 @@ int kv_close(int kv_descriptor) {
 		perror("closing socket");
 	}
 
+	return 0;
+
 }
 
 int kv_delete(int kv_descriptor, uint32_t key) {

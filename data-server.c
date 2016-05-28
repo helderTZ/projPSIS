@@ -49,7 +49,7 @@ int close_db(int);
 void error_and_die(const char *msg) {
   perror(msg);
   printf("\n*******************SURPRISE MOTHERFUCKER*************\n");fflush(stdout);
-  pthread_exit(NULL);
+  //pthread_exit(NULL);
 }
 
 void signal_handler(int n) {
@@ -120,7 +120,7 @@ void * handle_requests(void* arg) {
      
     // terminate this thread
     printf("exiting handle_requests, socket= %d \n",socket_fd); fflush(stdout);
-    //return NULL;
+    return NULL;
      
 }//end handle_requests
  
@@ -183,6 +183,8 @@ int write_db(int socket_fd, kv_client2server message) {
         perror("send failed");
         return -1;
     }
+
+    return 0;
 }
  
  
@@ -304,7 +306,7 @@ int main(){
         local_addr.sin_family = AF_INET;
         local_addr.sin_port = htons(INITIAL_PORT);
         //err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
-        if(err == -1) error_and_die("inet_aton");
+        //if(err == -1) error_and_die("inet_aton");
         local_addr.sin_addr.s_addr = INADDR_ANY;
         
         //make socket immediatly available after it closes
@@ -324,7 +326,6 @@ int main(){
 
 
         client_addr_size = sizeof(client_addr);
-        int dummy_socket;
  
     while(1){
  		
@@ -334,8 +335,6 @@ int main(){
 
 		printf("DATA-SERVER: accepted\n"); fflush(stdout);
         //printf("socket=%d\n", new_socket); fflush(stdout);
-        
-        dummy_socket = new_socket;
 
         err = pthread_create(&tid, NULL, handle_requests, (void *) new_socket);
         if(err!=0)error_and_die("pthread_create");

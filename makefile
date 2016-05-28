@@ -7,7 +7,7 @@ front-server :
 	gcc  -o front-server front-server.c database.c -lpthread -std=gnu99 -g -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 
 client-single : 
-	gcc  -o client_single cli-exe-1.c psiskv_lib.c -lpthread -std=gnu99 -g 
+	gcc  -o client_single cli-exe-1.c psiskv_lib.c -lpthread -std=gnu99 -g
 
 client-par-1 : 
 	gcc  -o client_par-1 cli-exe-par-1.c psiskv_lib.c -lpthread -std=gnu99 -g

@@ -19,6 +19,29 @@ struct pii {
 };
 
 int dataserver_port = INITIAL_PORT;
+int pid;
+
+
+
+
+void* manage_operator(void* arg) {
+	char command[100];
+
+	while(1) {
+		scanf("%s", command);
+		if(strcmp(command, "quit")) {
+			kill(pid, SIGKILL);
+			exit(0);
+		}
+	}
+}
+
+void signal_handler(int n) {
+
+    kill(pid, SIGKILL);
+	exit(0);
+    
+}
 
 void* manage_client(void *arg) {
 
@@ -47,7 +70,7 @@ void wake_dataserver(char** envp) {
 	printf("pwd: %s\n", pwd);
 	fclose(f_pwd);
 
-	int pid = fork();
+	pid = fork();
 	if (pid == 0){
 		char* newarg[] = {pwd, "data-server", NULL};
 		execve("data-server", newarg, envp);
@@ -105,6 +128,13 @@ int main(int argc, char *argv[], char *envp[]){
     //Socket stuff
     int option=1;
     int dataserver_port;
+
+    /* set handler for signal SIGINT */
+    struct sigaction new_action;
+    new_action.sa_handler = signal_handler;
+    sigemptyset (&new_action.sa_mask);
+    new_action.sa_flags = 0;
+    sigaction (SIGINT, &new_action, NULL);
 
 
 	//----------------------- Shared memory init --------------------
@@ -176,6 +206,10 @@ int main(int argc, char *argv[], char *envp[]){
 		perror("listen");
 		exit(-1);
 	}
+
+
+	//---------------------------------- operator ----------------------------------
+	pthread_create(&tid, NULL, manage_operator, NULL);
 
 
 	int local_addr_size = sizeof(local_addr);
