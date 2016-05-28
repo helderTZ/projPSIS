@@ -118,12 +118,12 @@ int read_log(){
 
 dictionary * find_entry(uint32_t key){
 	dictionary *aux = database;
+	dictionary *aux2;
 	int i=0;
 
 	pthread_t tid = pthread_self();
 
 	if(isEmpty) return NULL;
-
 
 	//Critical region
 	pthread_mutex_lock(&mutex);
@@ -133,9 +133,7 @@ dictionary * find_entry(uint32_t key){
 	}
 
 	while(aux->next != database){
-		
 		aux = aux->next;
-		
 		if(aux->key==key) {
 			pthread_mutex_unlock(&mutex);
 			return aux;
@@ -292,6 +290,7 @@ int write_file_entry(FILE *fp, dictionary aux2, void * value){
 	nritems = fwrite(&(aux2.value_length),sizeof(uint32_t),1,fp); if(nritems!=1) return -1;
 	//write value
 	nritems = fwrite(value,aux2.value_length,1,fp); if(nritems!=1) return -1;
+
 	//printf("key = %d\tvalue = %s\n", aux->key, (char*)aux->value);	
 	return 0;
 }

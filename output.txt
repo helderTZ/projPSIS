@@ -1,91 +1,581 @@
-reading backup...
-fread key reached eof
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
-DATA-SERVER: waiting for accept...
-DATA-SERVER: waiting for accept...
----------------------------- WRITING --------------------
-value received = 0
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
----------------------------- WRITING --------------------
-value received = 2
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
----------------------------- WRITING --------------------
-value received = 4
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
----------------------------- WRITING --------------------
-value received = 6
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
----------------------------- WRITING --------------------
-value received = 8
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
-Inside close op
----------------------------- CLOSING --------------------
-backing up...
-reading backup...
-fread key reached eof
-key = 1	value = 3
-key = 3	value = 3
-key = 5	value = 5
-key = 7	value = 7
-key = 9	value = 9
-key = 0	value = 0
-key = 2	value = 20
-key = 4	value = 40
-key = 6	value = 60
-key = 8	value = 80
-DATA-SERVER: waiting for accept...
-DATA-SERVER: waiting for accept...
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+socket=3, port=20000
+socket=3, port=20000
+ data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 8 with value 8
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=3, port=20000
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=3, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=4, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 0 writing key 4 with value 4
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=4, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 0 writing key 4 with value 4
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
+socket=4, port=20000
+CLIENT 1 connected to data-server
+CLIENT 1 writing key 1 with value 1
+socket=4, port=20000
+CLIENT 1 writing key 3 with value 3
+CLIENT 0 connected to data-server
+CLIENT 0 writing key 0 with value 0
+CLIENT 0 writing key 2 with value 2
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 0 writing key 6 with value 6
+CLIENT 1 writing key 9 with value 9
+CLIENT 0 writing key 8 with value 8
+writing values
+CLIENT 1 writing key 1 with value 1
+CLIENT 1 writing key 3 with value 3
+CLIENT 1 writing key 5 with value 5
+CLIENT 1 writing key 7 with value 7
+CLIENT 1 writing key 9 with value 9
