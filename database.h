@@ -20,7 +20,7 @@
 //#define FREE(x) {printf("%p\n",x); fflush(stdout); free(x); x=NULL;}
 #define FREE(x) free(x);
 
-//#define ENABLE_LOGS 1
+#define ENABLE_LOGS 1
 
 pthread_mutex_t mutex, mutex_log, mutex_delete;
 

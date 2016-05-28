@@ -29,7 +29,9 @@ void* manage_operator(void* arg) {
 
 	while(1) {
 		scanf("%s", command);
-		if(strcmp(command, "quit")) {
+		printf("FRONT: %s\n", command); fflush(stdout);
+		if(strcmp(command, "quit") == 0) {
+			printf("FRONT: going to kill\n"); fflush(stdout);
 			kill(pid, SIGKILL);
 			exit(0);
 		}
@@ -116,7 +118,12 @@ int main(int argc, char *argv[], char *envp[]){
 	int err;
 	int socket_fd;
 	int new_socket;
-	pthread_t tid;
+
+	//Thread stuff
+	pthread_t tid[MAX_CLIENTS];
+	int i=0;
+	pthread_t tid_operator, tid_heartbeat; 
+
 	int backlog = 100;
 	pid_t pid;
 
@@ -159,7 +166,7 @@ int main(int argc, char *argv[], char *envp[]){
     struct pii args;
     args.shm = shm;
     args.envp = envp;
-	pthread_create( &tid, NULL, manage_heartbeat, (void *)(&args) );
+	pthread_create( &tid_heartbeat, NULL, manage_heartbeat, (void *)(&args) );
 
 
 
@@ -209,11 +216,12 @@ int main(int argc, char *argv[], char *envp[]){
 
 
 	//---------------------------------- operator ----------------------------------
-	pthread_create(&tid, NULL, manage_operator, NULL);
+	pthread_create(&tid_operator, NULL, manage_operator, NULL);
 
 
 	int local_addr_size = sizeof(local_addr);
 	int client_addr_size = sizeof(client_addr);
+
 
 
 
@@ -230,8 +238,9 @@ int main(int argc, char *argv[], char *envp[]){
 			exit(-1);
 		}
 
+		i++;
 		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);fflush(stdout);
-		err = pthread_create(&tid, NULL, manage_client, (void *) new_socket);
+		err = pthread_create(&tid[i], NULL, manage_client, (void *) new_socket);
 		if(err!=0) {
 			perror("pthread_create");
 			exit(-1);

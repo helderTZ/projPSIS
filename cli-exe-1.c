@@ -6,9 +6,9 @@
 #include <unistd.h>
 
 
-#define MAX_VALUES 100
+#define MAX_VALUES 10
 
-int main(){
+int main(int argc, char*argv[]){
 
 	char linha[100];
 	pid_t pid = getpid();
@@ -20,7 +20,7 @@ int main(){
 	}
 
 	printf("\nPID %d writing first values...\n", pid);fflush(stdout);
-	for (uint32_t i = 0; i < MAX_VALUES; i ++){
+	for (uint32_t i = atoi(argv[1]); i < atoi(argv[1])+MAX_VALUES; i ++){
 		sprintf(linha, "%u", i);
 		printf("PID %d writing key %d with value %s\n",pid, i, linha);fflush(stdout);
 		kv_write(kv, i , linha, strlen(linha)+1, 0);
@@ -28,7 +28,7 @@ int main(){
 
 	printf("\nPID %d press enter to read values\n", pid);fflush(stdout);
 	//getchar();
-	for (uint32_t i = 0; i < MAX_VALUES; i ++){
+	for (uint32_t i = atoi(argv[1]); i < atoi(argv[1])+MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
 			printf ("PID %d key - %10u value %s\n",pid, i, linha);fflush(stdout);
 		}
@@ -36,7 +36,7 @@ int main(){
 
 	printf("\nPID %d press enter to delete even values\n", pid);fflush(stdout);
 	//getchar();
-	for (uint32_t i = 0; i < MAX_VALUES; i +=2){		
+	for (uint32_t i = atoi(argv[1]); i < atoi(argv[1])+MAX_VALUES; i +=2){		
 		printf("PID %d deleting key %d\n", pid, i);fflush(stdout);
 		if(kv_delete(kv, i)==0){
 			printf("PID %d deleted key - %10u\n", pid, i);fflush(stdout);
@@ -47,7 +47,7 @@ int main(){
 
 	printf("\nPID %d press enter to read values\n", pid);fflush(stdout);
 	//getchar();
-	for (uint32_t i = 0; i < MAX_VALUES; i ++){
+	for (uint32_t i = atoi(argv[1]); i < atoi(argv[1])+MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
 			printf ("PID %d key - %10u value %s\n", pid, i, linha);fflush(stdout);
 		}else {
@@ -56,7 +56,7 @@ int main(){
 	}
 
 	printf("\nPID %d writing new values...\n", pid);fflush(stdout);
-	for (uint32_t i = 0; i < MAX_VALUES; i ++){
+	for (uint32_t i = atoi(argv[1]); i < atoi(argv[1])+MAX_VALUES; i ++){
 		sprintf(linha, "%u", i*10);
 		printf("PID %d writing key %d with value %s\n", pid, i, linha);fflush(stdout);
 		kv_write(kv, i , linha, strlen(linha)+1, 0); /* will not overwrite*/
@@ -64,7 +64,7 @@ int main(){
 
 	printf("\nPID %d press enter to read new values\n", pid);fflush(stdout);
 	//getchar();
-	for (uint32_t i = 0; i < MAX_VALUES; i ++){
+	for (uint32_t i = atoi(argv[1]); i < atoi(argv[1])+MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
 			printf ("PID %d key - %10u value %s\n", pid, i, linha);fflush(stdout);
 		}

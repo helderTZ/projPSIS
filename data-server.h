@@ -19,6 +19,7 @@
 #include <sys/shm.h>
 
 
+#define MAX_CLIENTS 1000
 
 #define KV_FIFO "/tmp/kv_fifo"
 

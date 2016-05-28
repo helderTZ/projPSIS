@@ -46,6 +46,8 @@ int close_db(int);
  
 }*/
 
+
+
 void error_and_die(const char *msg) {
   perror(msg);
   printf("\n*******************SURPRISE MOTHERFUCKER*************\n");fflush(stdout);
@@ -67,6 +69,11 @@ void * heartbeat_thread(void* arg) {
 		sleep(5);
 	}
 }
+
+
+
+
+
  
 void * handle_requests(void* arg) {
  
@@ -206,6 +213,8 @@ int close_db(int socket_fd) {
     printf("---------------------------- CLOSING --------------------\n"); fflush(stdout);
     printf("closing socket=%d\n", socket_fd); fflush(stdout);
 
+    printList();
+
     //available_ports[socket_fd-INITIAL_PORT].status = AVAILABLE;
     //if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     return close(socket_fd);
@@ -220,10 +229,10 @@ int main(){
     struct sockaddr_in client_addr;
     int client_addr_size;
     int err;
-    int i;
+    
     int socket_fd;
     int new_socket;
-    pthread_t tid;
+
     int backlog = 100;
 
     /*//initialise ports struct
@@ -231,6 +240,11 @@ int main(){
         available_ports[i].port = TOTAL_PORTS+1;
         available_ports[i].status = AVAILABLE;
     }*/
+
+    //threads stuff
+    pthread_t tid_heartbeat;
+    int i;
+    pthread_t tid[MAX_CLIENTS];
 
     //Shared Memory;
 	int shmid;
@@ -246,13 +260,16 @@ int main(){
      
     /* initialisation */
     dictionary_init();
+
     #ifdef ENABLE_LOGS
+
     if(read_backup("backup_teste.bin") < 0) printf("Backup not exists\n");
     printf("after reading backup\n");
     if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
     if(read_log() < 0) printf("Error executing or empty log_file\n");
     if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
+
 	#endif
 
     //printList();
@@ -262,7 +279,10 @@ int main(){
     sigemptyset (&new_action.sa_mask);
     new_action.sa_flags = 0;
     sigaction (SIGINT, &new_action, NULL);
-     
+
+
+
+
     
     //Shared memory init***************************
     /*
@@ -320,8 +340,9 @@ int main(){
         if(err == -1) error_and_die("listen");
 
 
-        err = pthread_create(&tid, NULL, heartbeat_thread,(void *) shm);
+        err = pthread_create(&tid_heartbeat, NULL, heartbeat_thread,(void *) shm);
         if(err!=0) error_and_die("pthread_create heartbeat");
+
 
 
         client_addr_size = sizeof(client_addr);
@@ -330,12 +351,17 @@ int main(){
  		
         printf("DATA-SERVER: waiting for accept...\n"); fflush(stdout);
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
+        printf("errno = %d EINTR=%d\n", errno, EINTR); fflush(stdout);
         if(new_socket == 0) error_and_die("socket accept");
+
 
 		printf("DATA-SERVER: accepted\n"); fflush(stdout);
         //printf("socket=%d\n", new_socket); fflush(stdout);
 
-        err = pthread_create(&tid, NULL, handle_requests, (void *) new_socket);
+        if(i<MAX_CLIENTS) i++;
+        else i=0;
+
+        err = pthread_create(&tid[i], NULL, handle_requests, (void *) new_socket);
         if(err!=0)error_and_die("pthread_create");
     }
 
