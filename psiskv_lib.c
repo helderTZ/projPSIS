@@ -217,8 +217,8 @@ int kv_delete(int kv_descriptor, uint32_t key) {
 	//check if it was deleted
 	nbytes = recv(kv_descriptor, &message, sizeof(kv_client2server), 0);
 
-	if(message.error_code != 0) {
-		perror("delete failed");
+	//Try to delete - Entry not exists
+	if(message.error_code == -1) {
 		return -1;
 	}
 

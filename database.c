@@ -6,7 +6,7 @@
 dictionary * database;
 char backing_up=0;
 char isEmpty=1;
-extern pthread_mutex_t mutex, mutex_log;
+extern pthread_mutex_t mutex, mutex_log,mutex_delete;
 FILE * log_fp=NULL;
 
 int read_file_entry(FILE *fp, dictionary * aux);
@@ -45,20 +45,20 @@ int log_init (const char * file_name, const char * mode){
 
 int write_log(dictionary *arg_aux, char op, char overwrite){
 	dictionary aux;
-	printf("1log_fp=%p\n", log_fp);fflush(stdout);
+	//printf("1log_fp=%p\n", log_fp);fflush(stdout);
 	pthread_mutex_lock(&mutex);
 	aux=*arg_aux;
-	printf("2log_fp=%p\n", log_fp);fflush(stdout);
+	//printf("2log_fp=%p\n", log_fp);fflush(stdout);
 	aux.value = malloc(aux.value_length);
-	printf("3log_fp=%p\n", log_fp);fflush(stdout);
+	//printf("3log_fp=%p\n", log_fp);fflush(stdout);
 	memcpy(aux.value, arg_aux->value, aux.value_length);
-	printf("4log_fp=%p\n", log_fp);fflush(stdout);
+	//printf("4log_fp=%p\n", log_fp);fflush(stdout);
 	pthread_mutex_unlock(&mutex);
 	//write operation
-	printf("5log_fp=%p\n", log_fp);fflush(stdout);
+	//printf("5log_fp=%p\n", log_fp);fflush(stdout);
 	printf("write_log:\nop=%c overwrite=%d aux.key=%d\n", op, overwrite, aux.key);fflush(stdout);
 	pthread_mutex_lock(&mutex_log);
-	printf("6log_fp=%p\n", log_fp);
+	//printf("6log_fp=%p\n", log_fp);
 	int nritems = fwrite(&op,sizeof(char),1,log_fp); if(nritems!=1) error_and_die_db("write_log op failed\n");
 	nritems = fwrite(&overwrite,sizeof(char),1,log_fp); if(nritems!=1) error_and_die_db("write_log overwrite failed\n");
 	
@@ -110,7 +110,7 @@ int read_log(){
 		FREE(aux.value);
 	}
 	backing_up=0;
-	printf("EOF read_log\n");
+	//printf("EOF read_log\n");
 	fclose(log_fp);
 	//TODO: give mutex
 	return 0;
@@ -164,10 +164,12 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		database->value_length = value_length;
 		isEmpty = 0;
 		pthread_mutex_unlock(&mutex);
-		printf("inside isEmpty\n");fflush(stdout);
-		printf("backingup=%d\n", backing_up);fflush(stdout);
+		//printf("inside isEmpty\n");fflush(stdout);
+		//printf("backingup=%d\n", backing_up);fflush(stdout);
+		#ifdef ENABLE_LOGS
 		if (!backing_up)
 			if(write_log(database, 'w',(char) overwrite) < 0) error_and_die_db("add_entry, first entry, saving log");
+		#endif
 		return 0;
 	}
 
@@ -181,8 +183,10 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 			entry_found->value_length=value_length;//refresh value lenght
 			entry_found->value = value;
 			pthread_mutex_unlock(&mutex);
+			#ifdef ENABLE_LOGS
 			if (!backing_up)
 				if(write_log(entry_found, 'w', (char) overwrite) < 0) error_and_die_db("add_entry, overwrite entry, saving log");
+			#endif
 			return 0;
 		}else {//if already exists and not overwrite -> do nothing
 			return -2;
@@ -202,8 +206,11 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		database->prev=new_entry;//1st entry prev point to last entry
 		pthread_mutex_unlock(&mutex);
 
+		#ifdef ENABLE_LOGS
 		if (!backing_up)
 			if(write_log(new_entry, 'w',(char) overwrite) < 0) error_and_die_db("add_entry, new entry, saving log");
+		#endif
+
 		return 0;
 	}
 
@@ -221,6 +228,7 @@ int delete_entry(uint32_t key){
 
 
 	dictionary *aux;
+	pthread_mutex_lock(&mutex_delete);
 	aux=find_entry(key);
 	//printList();
 	//printf("deleteing key %d\n", aux->key); fflush(stdout);
@@ -231,15 +239,19 @@ int delete_entry(uint32_t key){
 		if(aux==database)//if the first node is deleted
 			database = aux->next;
 		pthread_mutex_unlock(&mutex);
-
+		pthread_mutex_unlock(&mutex_delete);
+		#ifdef ENABLE_LOGS
 		if (!backing_up)
 			if(write_log(aux, 'd', 0) < 0) error_and_die_db("delete_entry, saving log");
+		#endif
 
 		pthread_mutex_lock(&mutex);
 		FREE(aux);
 		pthread_mutex_unlock(&mutex);
+
 		return 0;		
 	}else{
+		pthread_mutex_unlock(&mutex_delete);
 		return -1;
 	} 
 }

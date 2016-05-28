@@ -48,7 +48,7 @@ int close_db(int);
 
 void error_and_die(const char *msg) {
   perror(msg);
-  exit(EXIT_FAILURE);
+  pthread_exit(NULL);
 }
 
 void signal_handler(int n) {
@@ -176,7 +176,7 @@ int write_db(int socket_fd, kv_client2server message) {
 
 
     printf("added key = %d value = %s error_code = %d\n", message.key, (char*)value, message.error_code); fflush(stdout);
-     
+    
     nbytes = send(socket_fd, &message, sizeof(message), 0);
     if(nbytes != sizeof(message)) {
         perror("send failed");
@@ -244,13 +244,14 @@ int main(){
      
     /* initialisation */
     dictionary_init();
+    #ifdef ENABLE_LOGS
     if(read_backup("backup_teste.bin") < 0) printf("Backup not exists\n");
     printf("after reading backup\n");
     if(log_init ("log_file.bin", "a+") < 0) printf("Error opening log_file\n");
     if(read_log() < 0) printf("Error executing or empty log_file\n");
     if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
-	
+	#endif
 
     /* set handler for signal SIGINT */
     struct sigaction new_action;

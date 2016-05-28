@@ -20,8 +20,9 @@
 //#define FREE(x) {printf("%p\n",x); fflush(stdout); free(x); x=NULL;}
 #define FREE(x) free(x);
 
-pthread_mutex_t mutex;
-pthread_mutex_t mutex_log;
+#define ENABLE_LOGS 1
+
+pthread_mutex_t mutex, mutex_log, mutex_delete;
 
 typedef struct dictionary_entry{
 	uint32_t key;
