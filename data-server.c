@@ -48,6 +48,7 @@ int close_db(int);
 
 void error_and_die(const char *msg) {
   perror(msg);
+  printf("\n*******************SURPRISE MOTHERFUCKER*************\n");fflush(stdout);
   pthread_exit(NULL);
 }
 
@@ -253,6 +254,7 @@ int main(){
     if(log_init ("log_file.bin", "w+") < 0) printf("Error opening log_file\n");
 	#endif
 
+    //printList();
     /* set handler for signal SIGINT */
     struct sigaction new_action;
     new_action.sa_handler = signal_handler;

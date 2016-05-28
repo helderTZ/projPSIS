@@ -14,6 +14,7 @@ int write_file_entry(FILE *fp, dictionary aux, void * value);
 
 int error_and_die_db(const char *msg) {
   perror(msg);
+  printf("\n*******************SURPRISE MOTHERFUCKER*************\n");fflush(stdout);
   return -1;
 }
 
