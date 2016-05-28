@@ -22,7 +22,7 @@ int main(){
 	}
 
 	printf("\npress enter to read values\n");
-	getchar();
+	//getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
 			printf ("key - %10u value %s\n", i, linha);
@@ -30,14 +30,14 @@ int main(){
 	}
 
 	printf("press enter to delete even values\n");
-	getchar();
+	//getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i +=2){		
 		printf("deleting key %d\n", i);
 		kv_delete(kv, i);
 	}
 
 	printf("press enter to read values\n");
-	getchar();
+	//getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
 			printf ("key - %10u value %s\n", i, linha);
@@ -54,7 +54,7 @@ int main(){
 	}
 
 	printf("press enter to read new values\n");
-	getchar();
+	//getchar();
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 100) == 0){
 			printf ("key - %10u value %s\n", i, linha);
