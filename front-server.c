@@ -13,11 +13,6 @@
 #include <signal.h>
 #include <pthread.h>
 
-struct pii {
-	int* shm;
-	char** envp;
-};
-
 int dataserver_port = INITIAL_PORT;
 int pid;
 
@@ -29,9 +24,8 @@ void* manage_operator(void* arg) {
 
 	while(1) {
 		scanf("%s", command);
-		printf("FRONT: %s\n", command); fflush(stdout);
 		if(strcmp(command, "quit") == 0) {
-			printf("FRONT: going to kill\n"); fflush(stdout);
+			printf("Terminating...\n");fflush(stdout);
 			kill(pid, SIGKILL);
 			exit(0);
 		}
@@ -49,15 +43,14 @@ void* manage_client(void *arg) {
 
 	int socket_fd = (int) arg;
 
-	printf("FRONT-SERVER: dataserver_port=%d\n", dataserver_port); fflush(stdout);
-	printf("FRONT-SERVER: INITIAL_PORT=%d\n", INITIAL_PORT); fflush(stdout);
-
 	//send data-server's port number to client
 	int nbytes = send(socket_fd , &dataserver_port, sizeof(int), 0);
 	if(nbytes!=sizeof(int)) {
 		perror("sending port number to client");
 		return NULL;
 	}
+
+	return NULL;
 
 }
 
@@ -69,7 +62,6 @@ void wake_dataserver(char** envp) {
 	char pwd[100];
 	fscanf(f_pwd, "%s", pwd);
 	sprintf(pwd, "%s/data-server", pwd);
-	printf("pwd: %s\n", pwd);
 	fclose(f_pwd);
 
 	pid = fork();
@@ -81,7 +73,7 @@ void wake_dataserver(char** envp) {
 }
 
 
-void* manage_heartbeat(void *arg) {
+/*void* manage_heartbeat(void *arg) {
 
 	struct pii args = *(struct pii*)arg;
 	int  *shm 	= args.shm;
@@ -100,6 +92,25 @@ void* manage_heartbeat(void *arg) {
 		}
 	}
 
+}*/
+
+void* manage_heartbeat(void *arg) {
+
+	struct pii args = *(struct pii*)arg;
+	int  *shm 	= args.shm;
+	char **envp = args.envp;
+	int status;
+
+	while(1){
+		*shm=1;
+		sleep(2);
+		if(*shm==1) {
+			printf("reviving data-server *shm=%d\n", *shm); fflush(stdout);
+			wait(&status);
+			wake_dataserver( envp );
+		}
+	}
+
 }
 
 
@@ -111,8 +122,6 @@ void error_and_die(const char *msg) {
 
 int main(int argc, char *argv[], char *envp[]){
 
-    kv_client2server m;
-	int nbytes;
 	struct sockaddr_in local_addr;
 	struct sockaddr_in client_addr;
 	int err;
@@ -125,7 +134,6 @@ int main(int argc, char *argv[], char *envp[]){
 	pthread_t tid_operator, tid_heartbeat; 
 
 	int backlog = 100;
-	pid_t pid;
 
 	// Shared Memory;
 	int shmid;
@@ -134,7 +142,7 @@ int main(int argc, char *argv[], char *envp[]){
 
     //Socket stuff
     int option=1;
-    int dataserver_port;
+
 
     /* set handler for signal SIGINT */
     struct sigaction new_action;
@@ -150,10 +158,12 @@ int main(int argc, char *argv[], char *envp[]){
     key = 1234;
 
     //Create the segment.
-    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
+    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) 
+    	error_and_die("shmget-front server");
 
     //Now we attach the segment to our data space.
-    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
+    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) 
+    	error_and_die("shmat");
 
 
 
@@ -191,10 +201,6 @@ int main(int argc, char *argv[], char *envp[]){
 	local_addr.sin_family = AF_INET;
 	local_addr.sin_port = htons(FRONT_PORT);
 	//err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
-	if(err == -1) {
-		perror("inet_aton");
-		exit(-1);
-	}
 	local_addr.sin_addr.s_addr = INADDR_ANY;
 	
 	//make socket immediatly available after it closes
@@ -219,11 +225,11 @@ int main(int argc, char *argv[], char *envp[]){
 	pthread_create(&tid_operator, NULL, manage_operator, NULL);
 
 
-	int local_addr_size = sizeof(local_addr);
-	int client_addr_size = sizeof(client_addr);
+	socklen_t local_addr_size = sizeof(local_addr);
+	socklen_t client_addr_size = sizeof(client_addr);
 
 
-
+	int errsv;
 
   	while(1){
 
@@ -233,12 +239,18 @@ int main(int argc, char *argv[], char *envp[]){
 
 		printf("FRONT-SERVER: before accept\n");fflush(stdout);
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
+		errsv = errno;
+
+        //if signal is received while in accept, it will return -1 and generate the EINTR error
+        if(new_socket < 0 && errsv==EINTR) continue;
 		if(new_socket == 0) {
 			perror("socket accept");
 			exit(-1);
 		}
 
-		i++;
+		if(i<MAX_CLIENTS) i++;
+		else i=0;
+
 		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);fflush(stdout);
 		err = pthread_create(&tid[i], NULL, manage_client, (void *) new_socket);
 		if(err!=0) {

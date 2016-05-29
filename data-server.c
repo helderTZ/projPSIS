@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <sys/un.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -19,75 +20,118 @@
  
 #define MSG_NOT_EXISTS -2
 
-typedef struct ports {
+/*typedef struct ports {
     int port;
     char status;
-}s_ports;
+}s_ports;*/
+
+typedef struct request_t {
+	int socket;
+	int tid;
+}request_t;
 
 
 extern pthread_mutex_t mutex;
 extern FILE *log_fp;
-s_ports available_ports[TOTAL_PORTS];
+//s_ports available_ports[TOTAL_PORTS];
+char clients[MAX_CLIENTS];
+int pid;
  
-int read_db(int socket_fd, kv_client2server message);
-int write_db(int socket_fd, kv_client2server message);
-int delete_db(int socket_fd, kv_client2server message);
+int read_db(int socket_fd, kv_message message);
+int write_db(int socket_fd, kv_message message);
+int delete_db(int socket_fd, kv_message message);
 int close_db(int);
  
- 
- 
- 
-//TODO: transformar o log num backup periodicamente, por exemplo, no principio e no fim
-/*void updateBackup() {
- 
-    FILE *fp = fopen(LOG_FILE, "a");
-     
-    fclose(fp);
- 
-}*/
-
-
 
 void error_and_die(const char *msg) {
   perror(msg);
-  printf("\n*******************SURPRISE MOTHERFUCKER*************\n");fflush(stdout);
-  //pthread_exit(NULL);
 }
 
-void signal_handler(int n) {
-    //if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
 
-    if(!close_log()) error_and_die("closing log_file\n");
+void signal_handler(int n) {
+
+    //if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
+    if(close_log()) error_and_die("closing log_file\n");
+    exit(0);
     //updateBackup();
     
 }
 
-void * heartbeat_thread(void* arg) {
-	int * shm = (int *) arg;
+
+/*
+void wake_frontserver(char** envp) {
+
+	// Required for data-server
+	system("pwd > pwd.txt");
+	FILE *f_pwd = fopen("pwd.txt", "r");
+	char pwd[100];
+	fscanf(f_pwd, "%s", pwd);
+	sprintf(pwd, "%s/data-server", pwd);
+	fclose(f_pwd);
+
+	pid = fork();
+	if (pid == 0){
+		char* newarg[] = {pwd, "front-server", NULL};
+		execve("front-server", newarg, envp);
+	}
+
+}
+*/
+
+
+
+void * manage_heartbeat(void* arg) {
+	
+	struct pii args = *(struct pii*)arg;
+	int  *shm 	= args.shm;
+	char **envp = args.envp;
+	int status;
+
+	// para 'desfasar'
+	//sleep(0.2);
+
+	
 	while(1){
 		*shm=0;
-		sleep(5);
+		sleep(1);
 	}
+
 }
 
 
+void printClients() {
+
+	printf("CLIENTS:\n");
+	for(int i=0; i<MAX_CLIENTS; i++) {
+		printf("\t%d: %d\n", i, clients[i]); fflush(stdout);
+	}
+}
 
 
 
  
 void * handle_requests(void* arg) {
  
+ 	//request_t request = *(request_t*) arg;
     int socket_fd = (int) arg;
+ 	//int socket_fd = request.socket;
+ 	//int tid = request.tid;
     int nbytes;
-    int aux;
-    int i=0;
-    kv_client2server message_thread;
-    printf("entered handle_requests socket = %d\n", socket_fd); fflush(stdout);
- 
+    kv_message message_thread;
+
+
+    //clients[tid] = 1;
+
+
+    printf("socket=%d\n", socket_fd); fflush(stdout);
+
+ 	//printClients();
+
     while(1) {
          
         /* read message */
-        nbytes = recv(socket_fd, &message_thread, sizeof(message_thread), 0);
+        nbytes = recv(socket_fd, &message_thread, sizeof(kv_message), 0);
+        //printf("tid=%d, key=%d, value_length=%d\n", tid, message_thread.key, message_thread.value_length); fflush(stdout);
         if(nbytes != sizeof(message_thread)) {
             perror("reveive failed");
             exit(-1);
@@ -119,38 +163,43 @@ void * handle_requests(void* arg) {
         if(message_thread.op == 'c') {
             if(close_db(socket_fd)!=0)
                 error_and_die("close_db failed\n");
-            break;// break out of loop if client wants to close connection
+
+            // break out of loop if client wants to close connection
+            break;
         }
          
  
     }//end while
+
+    //clients[tid] = 0;
      
     // terminate this thread
-    printf("exiting handle_requests, socket= %d \n",socket_fd); fflush(stdout);
     return NULL;
      
 }//end handle_requests
  
  
-int read_db(int socket_fd, kv_client2server message) {
+int read_db(int socket_fd, kv_message message) {
 
     printf("---------------------------- READING --------------------\n"); fflush(stdout);
  
     dictionary * entry;
-    int err, nbytes;
+    int nbytes;
 
     message.error_code=read_entry(message.key, &entry);
 
-    if (message.error_code!=MSG_NOT_EXISTS)
-        if(entry->value_length > message.value_length)//message not entirely read
+    if (message.error_code!=MSG_NOT_EXISTS) {
+        if(entry->value_length > message.value_length) //message not entirely read
             message.error_code=-3; 
         else{
             message.value_length=entry->value_length;
         }
+    }
+
     // send message header to client with real size of msg
     nbytes = send(socket_fd , &message, sizeof(message), 0);
 
-    if(message.error_code!=MSG_NOT_EXISTS){//only send message if it exists
+    if(message.error_code!=MSG_NOT_EXISTS){ //only send message if it exists
         nbytes = send(socket_fd, entry->value, message.value_length, 0);
         if(nbytes != message.value_length) {
             perror("read_db: send failed");
@@ -163,26 +212,22 @@ int read_db(int socket_fd, kv_client2server message) {
  
  
  
-int write_db(int socket_fd, kv_client2server message) {
+int write_db(int socket_fd, kv_message message) {
 
     printf("---------------------------- WRITING --------------------\n"); fflush(stdout);
  
     void * value;
-    int err, nbytes;
+    int nbytes;
  
-    value = malloc(message.value_length);//allocate the necessary space for the message value
+    value = malloc(message.value_length); //allocate the necessary space for the message value
  
-    nbytes = recv(socket_fd, value , message.value_length , 0);//only read up to param value_length
+    nbytes = recv(socket_fd, value , message.value_length , 0); //only read up to param value_length
     if(nbytes != message.value_length) {
         perror("receive values failed");
         return -1;
     }
-
-    printf("received value = %s\n", (char*)value); fflush(stdout);
      
     message.error_code = add_entry(message.key, value, message.value_length, message.overwrite );
-
-    printf("added key = %d value = %s error_code = %d\n", message.key, (char*)value, message.error_code); fflush(stdout);
     
     nbytes = send(socket_fd, &message, sizeof(message), 0);
     if(nbytes != sizeof(message)) {
@@ -194,11 +239,11 @@ int write_db(int socket_fd, kv_client2server message) {
 }
  
  
-int delete_db(int socket_fd, kv_client2server message) {
+int delete_db(int socket_fd, kv_message message) {
 
     printf("---------------------------- DELETING --------------------\n"); fflush(stdout);
 
-    int err, nbytes;
+    int nbytes;
  
     message.error_code = delete_entry(message.key);
  
@@ -211,23 +256,19 @@ int delete_db(int socket_fd, kv_client2server message) {
 int close_db(int socket_fd) {
 
     printf("---------------------------- CLOSING --------------------\n"); fflush(stdout);
-    printf("closing socket=%d\n", socket_fd); fflush(stdout);
 
-    printList();
+    //printList();
 
     //available_ports[socket_fd-INITIAL_PORT].status = AVAILABLE;
     //if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     return close(socket_fd);
 }
  
-int main(){
+int main(int argc, char *argv[], char *envp[]){
  
-    kv_client2server m;
     int option = 1;
-    int nbytes;
     struct sockaddr_in local_addr;
     struct sockaddr_in client_addr;
-    int client_addr_size;
     int err;
     
     int socket_fd;
@@ -243,14 +284,13 @@ int main(){
 
     //threads stuff
     pthread_t tid_heartbeat;
-    int i;
+    int i=0;
     pthread_t tid[MAX_CLIENTS];
 
     //Shared Memory;
 	int shmid;
 	key_t key = 1234; //name of shared memory segment
 	int *shm;
-	int heartbeat=1;
 
     // Mutex
     if(pthread_mutex_init(&mutex, NULL) != 0){
@@ -272,7 +312,6 @@ int main(){
 
 	#endif
 
-    //printList();
     /* set handler for signal SIGINT */
     struct sigaction new_action;
     new_action.sa_handler = signal_handler;
@@ -284,17 +323,18 @@ int main(){
 
 
     
-    //Shared memory init***************************
+    //-------------------------------- Shared memory init //--------------------------------
     /*
      * Create the segment.
      */
-    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) error_and_die("shmget-front server");
+    if ((shmid = shmget(key, sizeof(int), IPC_CREAT | 0666)) < 0) 
+    	error_and_die("shmget-front server");
 
     /*
      * Now we attach the segment to our data space.
      */
-    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) error_and_die("shmat");
-    //********************************************************
+    if ((shm = shmat(shmid, NULL, 0)) == (int *) -1) 
+    	error_and_die("shmat");
     
 
 
@@ -340,28 +380,60 @@ int main(){
         if(err == -1) error_and_die("listen");
 
 
-        err = pthread_create(&tid_heartbeat, NULL, heartbeat_thread,(void *) shm);
-        if(err!=0) error_and_die("pthread_create heartbeat");
+
+
+        //--------------------------- heartbeat -------------------------
+        struct pii args;
+    	args.shm = shm;
+    	args.envp = envp;
+        pthread_create(&tid_heartbeat, NULL, manage_heartbeat,(void *)(&args) );
 
 
 
-        client_addr_size = sizeof(client_addr);
+        socklen_t client_addr_size = sizeof(client_addr);
+
+        // variable used to trap error
+        int errsv;
+
+        request_t request;
+
+
+
  
     while(1){
  		
         printf("DATA-SERVER: waiting for accept...\n"); fflush(stdout);
         new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
-        printf("errno = %d EINTR=%d\n", errno, EINTR); fflush(stdout);
-        if(new_socket == 0) error_and_die("socket accept");
+        errsv = errno;
+
+        //if signal is received while in accept, it will return -1 and generate the EINTR error
+        if(new_socket < 0 && errsv==EINTR) signal_handler(0);
+        if(new_socket == 0) {
+        	error_and_die("socket accept");
+        	continue;
+        }
 
 
 		printf("DATA-SERVER: accepted\n"); fflush(stdout);
         //printf("socket=%d\n", new_socket); fflush(stdout);
 
-        if(i<MAX_CLIENTS) i++;
-        else i=0;
+		request.socket = new_socket;
 
-        err = pthread_create(&tid[i], NULL, handle_requests, (void *) new_socket);
+
+		
+		/*for(i=0; i<MAX_CLIENTS; i++) {
+			if(clients[i] == 0) {
+				request.tid = i;
+				break;
+			}
+		}*/
+		if(i<MAX_CLIENTS) i++;
+		else i=0;
+		//request.tid = i;
+
+
+        //err = pthread_create(&tid[i], NULL, handle_requests, (void *) (&request) );
+        pthread_create(&tid[i], NULL, handle_requests, (void *) new_socket );
         if(err!=0)error_and_die("pthread_create");
     }
 

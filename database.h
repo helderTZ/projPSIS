@@ -17,8 +17,7 @@
 #include <signal.h>
 #include <pthread.h>
 
-//#define FREE(x) {printf("%p\n",x); fflush(stdout); free(x); x=NULL;}
-#define FREE(x) free(x);
+#define FREE(x) {free(x); x=NULL;}
 
 #define ENABLE_LOGS 1
 

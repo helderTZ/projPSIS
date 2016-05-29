@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define SOCK_ADDR "/tmp/sock_kv"
 #define FRONT_PORT 9999
 #define DATA_PORT 20000
 #define LOG_FILE "/tmp/log.txt"
@@ -21,13 +20,13 @@
 
 /* From client to server */
 
-typedef struct kv_client2server {
+typedef struct kv_message {
 	char op;
 	uint32_t key;
 	int value_length;
 	char overwrite;
 	char error_code;
-}kv_client2server;
+}kv_message;
 
 
 int kv_connect(char * kv_server_ip, int kv_server_port);

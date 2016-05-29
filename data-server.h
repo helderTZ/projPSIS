@@ -18,8 +18,13 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+struct pii {
+	int* shm;
+	char** envp;
+};
 
-#define MAX_CLIENTS 1000
+
+#define MAX_CLIENTS 100
 
 #define KV_FIFO "/tmp/kv_fifo"
 
@@ -28,12 +33,11 @@
 #define INITIAL_PORT 20000
 #define TOTAL_PORTS 1000
 
-kv_client2server message_thread;
 
 
-int read_db(int socket_fd, kv_client2server message);
-int write_db(int socket_fd, kv_client2server message);
-int delete_db(int socket_fd, kv_client2server message);
+int read_db(int socket_fd, kv_message message);
+int write_db(int socket_fd, kv_message message);
+int delete_db(int socket_fd, kv_message message);
 int close_db(int);
 void * handle_requests(void* arg);
 

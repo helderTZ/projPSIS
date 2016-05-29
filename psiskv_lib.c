@@ -77,7 +77,7 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 
 	//printf("\n\n--------------------WRITING---------------\n"); fflush(stdout);
 
-	kv_client2server message;
+	kv_message message;
 	message.op = 'w';	// para identificar ao server que é uma operação de write
 	message.key = key;
 	message.value_length = value_length;
@@ -90,7 +90,7 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 	fflush(stdout);*/
 
 	/* send message header */
-    int nbytes = send(kv_descriptor, &message, sizeof(kv_client2server), 0);
+    int nbytes = send(kv_descriptor, &message, sizeof(kv_message), 0);
 	
 	/* send message */
     nbytes = send(kv_descriptor, value, value_length, 0);
@@ -100,8 +100,8 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 	}
 	
 	//falta verificar se houve erro
-	nbytes = recv(kv_descriptor, &message, sizeof(kv_client2server),MSG_WAITALL );
-	if(nbytes != sizeof(kv_client2server)) {
+	nbytes = recv(kv_descriptor, &message, sizeof(kv_message),MSG_WAITALL );
+	if(nbytes != sizeof(kv_message)) {
 		printf("message.error_code=%d\n", message.error_code);
 		perror("kv_write: receive error_code of msg failed");
 		return -1;
@@ -116,7 +116,7 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 
 	//printf("\n\n--------------------READING---------------\n"); fflush(stdout);
 
-	kv_client2server message;
+	kv_message message;
 	message.op = 'r';	// para identificar ao server que é uma operação de write
 	message.key = key;
 	message.value_length = value_length;//quanto se quer ler desta key
@@ -128,14 +128,14 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 			message.op, message.key, message.value_length, message.overwrite, message.error_code); 
 	fflush(stdout);*/
 
-    int nbytes = send(kv_descriptor, &message, sizeof(kv_client2server), 0);
+    int nbytes = send(kv_descriptor, &message, sizeof(kv_message), 0);
 	
-	if(nbytes != sizeof(kv_client2server)) {
+	if(nbytes != sizeof(kv_message)) {
 		perror("send failed");
 		return -1;
 	}
 
-	//message_recv=(kv_client2server *) malloc(sizeof(kv_client2server));
+	//message_recv=(kv_message *) malloc(sizeof(kv_message));
 
 	/*printf("message inside kv_read BEFORE receiving size of value:\n"); fflush(stdout);
 	printf("op :%c, key: %d, value_length: %d, overwrite: %d, error_code: %d\n", 
@@ -143,8 +143,8 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 	fflush(stdout);*/
 
 	//read size of message and error message
-	nbytes = recv(kv_descriptor, &message, sizeof(kv_client2server),MSG_WAITALL);
-	if(nbytes != sizeof(kv_client2server)) {
+	nbytes = recv(kv_descriptor, &message, sizeof(kv_message),MSG_WAITALL);
+	if(nbytes != sizeof(kv_message)) {
 		perror("receive size of msg failed");
 		return -1;
 	}
@@ -179,16 +179,16 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length) {
 
 int kv_close(int kv_descriptor) {
 
-	kv_client2server message;
+	kv_message message;
 	message.op = 'c';	// close operation
 	message.key = 0;
 	message.value_length = 0;//quanto se quer ler desta key
 	message.overwrite = 0;
 	message.error_code = 0;
 
-	int nbytes = send(kv_descriptor, &message, sizeof(kv_client2server), 0);
+	int nbytes = send(kv_descriptor, &message, sizeof(kv_message), 0);
 	
-	if(nbytes != sizeof(kv_client2server)) {
+	if(nbytes != sizeof(kv_message)) {
 		perror("kv_close: send failed");
 		return -1;
 	}
@@ -203,7 +203,7 @@ int kv_close(int kv_descriptor) {
 
 int kv_delete(int kv_descriptor, uint32_t key) {
 	
-	kv_client2server message;
+	kv_message message;
 	message.op='d';
 	message.key=key;
 	message.value_length = 0;
@@ -211,15 +211,15 @@ int kv_delete(int kv_descriptor, uint32_t key) {
 	message.error_code = 0;
 	
 	//send order
-	int nbytes = send(kv_descriptor, &message, sizeof(kv_client2server), 0);
+	int nbytes = send(kv_descriptor, &message, sizeof(kv_message), 0);
 	
-	if(nbytes != sizeof(kv_client2server)) {
+	if(nbytes != sizeof(kv_message)) {
 		perror("send failed");
 		return -1;
 	}
 	
 	//check if it was deleted
-	nbytes = recv(kv_descriptor, &message, sizeof(kv_client2server),MSG_WAITALL );
+	nbytes = recv(kv_descriptor, &message, sizeof(kv_message),MSG_WAITALL );
 
 	//Try to delete - Entry not exists
 	if(message.error_code == -1) {

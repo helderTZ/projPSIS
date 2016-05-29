@@ -14,13 +14,11 @@ int write_file_entry(FILE *fp, dictionary aux, void * value);
 
 int error_and_die_db(const char *msg) {
   perror(msg);
-  printf("\n*******************SURPRISE MOTHERFUCKER*************\n");fflush(stdout);
   return -1;
 }
 
 
 int dictionary_init(){
-	int i;
 	//verificar se existe backup file, se existir fazer backup
 
 	//se houver backup alocar o tamanho necessario ao backup
@@ -48,7 +46,6 @@ int write_log(dictionary *arg_aux, char op, char overwrite){
 	dictionary aux;
 
 	pthread_mutex_lock(&mutex);
-	//aux=*arg_aux;
 	aux.key = arg_aux->key;
 	aux.value_length = arg_aux->value_length;
 	aux.value = malloc(aux.value_length);
@@ -57,10 +54,6 @@ int write_log(dictionary *arg_aux, char op, char overwrite){
 	pthread_mutex_unlock(&mutex);
 	
 	//write operation
-	printf("write_log: op=%c overwrite=%d aux.key=%d, aux.value_length=%d, aux.value=%s\n", op, overwrite, arg_aux->key, arg_aux->value_length, (char*)arg_aux->value);
-	fflush(stdout);
-	printf("write_log: op=%c overwrite=%d aux.key=%d, aux.value_length=%d, aux.value=%s\n", op, overwrite, aux.key, aux.value_length, (char*)aux.value);
-	fflush(stdout);
 	pthread_mutex_lock(&mutex_log);
 	int nritems = fwrite(&op,sizeof(char),1,log_fp); 
 	if(nritems!=1){
@@ -91,10 +84,10 @@ int write_log(dictionary *arg_aux, char op, char overwrite){
 int read_log(){
 	dictionary aux;
 	char op, overwrite;
-	//TODO: get mutex.....
 	//write operation
-	printf("inside read_log\n");
+
 	backing_up=1;
+
 	while(1){
 		int nritems = fread(&op,sizeof(char),1,log_fp); 
 		if(nritems!=1){
@@ -112,7 +105,6 @@ int read_log(){
 			else return -1;
 		}
 
-		printf("read_log:\nop=%c overwrite=%d aux.key=%d\n", op, overwrite, aux.key);
 		switch (op){
 			case 'w':
 				if(add_entry(aux.key, aux.value, aux.value_length, overwrite) < 0) {
@@ -135,8 +127,6 @@ int read_log(){
 
 dictionary * find_entry(uint32_t key){
 	dictionary *aux = database;
-	dictionary *aux2;
-	int i=0;
 
 	if(isEmpty) return NULL;
 
@@ -168,10 +158,6 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 	dictionary local_copy;
 	void* local_value;
 
-
-	printf("add_entry:\noverwrite=%d aux.key=%d, aux.value_length=%d, aux.value=%s, backingup=%d, isEmpty=%d\n",
-			overwrite, key, value_length, (char*)value, backing_up, isEmpty );
-	fflush(stdout);
 	local_value = malloc(value_length);
 
 	if(isEmpty) {
@@ -269,7 +255,7 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 */
 int delete_entry(uint32_t key){
 
-	pthread_t tid = pthread_self();
+	
 
 
 	dictionary *aux;
@@ -312,7 +298,7 @@ Warning: Do not forget to FREE the memory after read_entry function
 */
 int read_entry(uint32_t key, dictionary ** entry){
 
-	pthread_t tid = pthread_self();
+	
 
 	dictionary *aux;
 	pthread_mutex_lock(&mutex);
@@ -335,10 +321,8 @@ void printList() {//only for debug purpose
 
 	dictionary* aux = database;
 	pthread_mutex_lock(&mutex);
-	printf("key = %d\tvalue = %s\n", aux->key, (char*)(aux->value)); fflush(stdout);
 	while(aux->next!=database) {
 		aux = aux->next;
-		printf("key = %d\tvalue = %s\n", aux->key, (char*)(aux->value)); fflush(stdout);
 	}
 	pthread_mutex_unlock(&mutex);
 }
@@ -350,28 +334,24 @@ int write_file_entry(FILE *fp, dictionary aux2, void * value){
 	int nritems;
 
 	//write key and value length
-	printf("In write_file_entry: key = %d\n", aux2.key); fflush(stdout);
 	nritems = fwrite(&(aux2.key),sizeof(uint32_t),1,fp); 
 	if(nritems!=1) {
-		printf("In write_file_entry: deu merda 1\n"); fflush(stdout);
+		printf("In write_file_entry\n"); fflush(stdout);
 		return -1;
 	}
 
-	printf("In write_file_entry: value_length = %d\n", aux2.value_length); fflush(stdout);
 	nritems = fwrite(&(aux2.value_length),sizeof(uint32_t),1,fp); 
 	if(nritems!=1) {
-		printf("In write_file_entry: deu merda 2\n"); fflush(stdout);
+		printf("In write_file_entry\n"); fflush(stdout);
 		return -1;
 	}
 	//write value
-	printf("In write_file_entry: value = %s\n", (char*)value); fflush(stdout);
 	nritems = fwrite(value,aux2.value_length,1,fp); 
 	if(nritems!=1) {
-		printf("In write_file_entry: deu merda 3\n"); fflush(stdout);
+		printf("In write_file_entry\n"); fflush(stdout);
 		return -1;
 	}
 
-	printf("write_file_entry: key = %d\tvalue = %s\n", aux2.key, (char*)value);	
 	return 0;
 }
 
@@ -395,14 +375,12 @@ int read_file_entry(FILE *fp, dictionary * aux){
 		printf("fread value_length reached eof\n"); 
 		return -1;
 	}
-	printf("In read_file_entry:  key = %d\tvalue length = %d\n", aux->key, aux->value_length);
 	temp_value = malloc(aux->value_length);
 	nritems = fread(temp_value,aux->value_length,1,fp);//read value
 	if(nritems!=1){
 		printf("fread value reached eof\n"); 
 		return -1;
 	}
-	printf("In read_file_entry: value=%s\n", (char *)temp_value);
 	aux->value=temp_value;
 	return 0;
 }
@@ -419,7 +397,6 @@ int create_backup(const char * file_name){
 	    FILE *fp = fopen(file_name, "wb");
 	    if(fp == NULL) return -1;
 
-	    printf("backing up...\n");
 
 	    if(write_file_entry(fp, *aux, aux->value) < 0){ 
 	    	
@@ -448,11 +425,9 @@ int read_backup(const char * file_name){
     if(fp == NULL) return -1;
     clearerr(fp);
 
-    printf("reading backup...\n");
     backing_up=1;
     while(1) {
 		if(read_file_entry(fp, &aux)<0) break;
-		printf("In read_backup: key=%d, value_length=%d, value=%s\n", aux.key, aux.value_length, (char*)aux.value); fflush(stdout);
 		if(add_entry(aux.key, aux.value, aux.value_length, 1)<0) return -1;	
 	}
 	backing_up=0;
