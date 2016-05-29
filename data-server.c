@@ -260,7 +260,7 @@ int close_db(int socket_fd) {
     //printList();
 
     //available_ports[socket_fd-INITIAL_PORT].status = AVAILABLE;
-    //if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
+    if(create_backup("backup_teste.bin")==-1) printf("create_backup error\n");
     return close(socket_fd);
 }
  
