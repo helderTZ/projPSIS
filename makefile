@@ -1,7 +1,7 @@
 all : clean client-read client-write client-overwrite client-delete client-single client-par-1 client-par-2 front-server data-server
 
 data-server : 
-	gcc  -o data-server data-server.c database.c -lpthread -std=gnu99 -Wall -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -g
+	gcc  -o data-server data-server.c database.c -lpthread -std=gnu99 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -g
 
 front-server : 
 	gcc  -o front-server front-server.c database.c -lpthread -std=gnu99 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -g

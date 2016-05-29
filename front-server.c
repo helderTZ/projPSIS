@@ -73,26 +73,6 @@ void wake_dataserver(char** envp) {
 }
 
 
-/*void* manage_heartbeat(void *arg) {
-
-	struct pii args = *(struct pii*)arg;
-	int  *shm 	= args.shm;
-	char **envp = args.envp;
-	int status;
-
-	int heartbeat=1;
-	while(heartbeat){
-		*shm=1;
-		sleep(10);
-		if(*shm==1)
-			heartbeat=0;
-		else{
-			wait(&status);
-			wake_dataserver( envp );
-		}
-	}
-
-}*/
 
 void* manage_heartbeat(void *arg) {
 
@@ -105,7 +85,6 @@ void* manage_heartbeat(void *arg) {
 		*shm=1;
 		sleep(2);
 		if(*shm==1) {
-			printf("reviving data-server *shm=%d\n", *shm); fflush(stdout);
 			wait(&status);
 			wake_dataserver( envp );
 		}
@@ -122,18 +101,13 @@ void error_and_die(const char *msg) {
 
 int main(int argc, char *argv[], char *envp[]){
 
-	struct sockaddr_in local_addr;
-	struct sockaddr_in client_addr;
+	
 	int err;
-	int socket_fd;
-	int new_socket;
+	int backlog = 100;
 
 	//Thread stuff
-	pthread_t tid[MAX_CLIENTS];
-	int i=0;
+	pthread_t tid;
 	pthread_t tid_operator, tid_heartbeat; 
-
-	int backlog = 100;
 
 	// Shared Memory;
 	int shmid;
@@ -141,6 +115,10 @@ int main(int argc, char *argv[], char *envp[]){
     int *shm;
 
     //Socket stuff
+    struct sockaddr_in local_addr;
+	struct sockaddr_in client_addr; 
+	int socket_fd;
+	int new_socket;
     int option=1;
 
 
@@ -179,17 +157,6 @@ int main(int argc, char *argv[], char *envp[]){
 	pthread_create( &tid_heartbeat, NULL, manage_heartbeat, (void *)(&args) );
 
 
-
-	/*
-	//------------------------ Create FIFO -------------------------
-    int fifo;
-    unlink(KV_FIFO);	// delete fifo if it already exists
-    mkfifo(KV_FIFO, S_IFIFO | 0666);	// create fifo file
-    fifo = open(KV_FIFO, O_RDONLY );	// open fifo for reading
-	*/
-
-
-
 	//----------------------- Socket creation -----------------------
 
 	// create socket
@@ -200,7 +167,6 @@ int main(int argc, char *argv[], char *envp[]){
 
 	local_addr.sin_family = AF_INET;
 	local_addr.sin_port = htons(FRONT_PORT);
-	//err = inet_aton("127.0.0.1", &(local_addr.sin_addr));
 	local_addr.sin_addr.s_addr = INADDR_ANY;
 	
 	//make socket immediatly available after it closes
@@ -225,9 +191,7 @@ int main(int argc, char *argv[], char *envp[]){
 	pthread_create(&tid_operator, NULL, manage_operator, NULL);
 
 
-	socklen_t local_addr_size = sizeof(local_addr);
 	socklen_t client_addr_size = sizeof(client_addr);
-
 
 	int errsv;
 
@@ -235,9 +199,7 @@ int main(int argc, char *argv[], char *envp[]){
 
     	//----------------------- manage client connections ---------------
 
-    	//read(fifo, &dataserver_port, sizeof(int));
 
-		printf("FRONT-SERVER: before accept\n");fflush(stdout);
 		new_socket = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_size);
 		errsv = errno;
 
@@ -248,14 +210,9 @@ int main(int argc, char *argv[], char *envp[]){
 			exit(-1);
 		}
 
-		if(i<MAX_CLIENTS) i++;
-		else i=0;
-
-		printf("FRONT-SERVER: after accept sck=%d\n", new_socket);fflush(stdout);
-		err = pthread_create(&tid[i], NULL, manage_client, (void *) new_socket);
+		err = pthread_create(&tid, NULL, manage_client, (void *) new_socket);
 		if(err!=0) {
 			perror("pthread_create");
-			exit(-1);
 		}
 	}
 }

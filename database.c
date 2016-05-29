@@ -112,16 +112,14 @@ int read_log(){
 				}
 				break;
 			case 'd':
-				if(delete_entry(aux.key) < 0) return error_and_die_db("read_log delete_entry failed");
+				//if entry doesnt exists no problem
+				delete_entry(aux.key);
 				break;
 		}
-		//FREE(aux.value);
 	}
+
 	backing_up=0;
-	//printf("EOF read_log\n");
-	printList();
 	fclose(log_fp);
-	//TODO: give mutex
 	return 0;
 }
 
@@ -170,17 +168,21 @@ int add_entry(uint32_t key, void * value, uint32_t value_length, int overwrite )
 		isEmpty = 0;
 		pthread_mutex_unlock(&mutex);
 		local_copy.value=local_value;
-		//printf("inside isEmpty\n");fflush(stdout);
-		//printf("backingup=%d\n", backing_up);fflush(stdout);
+
 		#ifdef ENABLE_LOGS
-		if (!backing_up)
+
+		if (!backing_up) {
 			if(write_log(&local_copy, 'w',(char) overwrite) < 0) {
 				perror("add_entry, first entry, saving log");
 				FREE(local_value);
 				return -1;
 			}
+		}
+
 		#endif
-		FREE(local_value);	
+
+		FREE(local_value);
+
 		return 0;
 	}
 
@@ -263,8 +265,7 @@ int delete_entry(uint32_t key){
 	pthread_mutex_lock(&mutex);
 	aux=find_entry(key);
 	pthread_mutex_unlock(&mutex);
-	//printList();
-	//printf("deleteing key %d\n", aux->key); fflush(stdout);
+
 	if (aux!=NULL){
 		pthread_mutex_lock(&mutex);
 		aux->prev->next=aux->next;
@@ -273,9 +274,12 @@ int delete_entry(uint32_t key){
 			database = aux->next;
 		pthread_mutex_unlock(&mutex);
 		pthread_mutex_unlock(&mutex_delete);
+
 		#ifdef ENABLE_LOGS
+
 		if (!backing_up)
 			if(write_log(aux, 'd', 0) < 0) error_and_die_db("delete_entry, saving log");
+
 		#endif
 
 		pthread_mutex_lock(&mutex);
@@ -336,19 +340,16 @@ int write_file_entry(FILE *fp, dictionary aux2, void * value){
 	//write key and value length
 	nritems = fwrite(&(aux2.key),sizeof(uint32_t),1,fp); 
 	if(nritems!=1) {
-		printf("In write_file_entry\n"); fflush(stdout);
 		return -1;
 	}
 
 	nritems = fwrite(&(aux2.value_length),sizeof(uint32_t),1,fp); 
 	if(nritems!=1) {
-		printf("In write_file_entry\n"); fflush(stdout);
 		return -1;
 	}
 	//write value
 	nritems = fwrite(value,aux2.value_length,1,fp); 
 	if(nritems!=1) {
-		printf("In write_file_entry\n"); fflush(stdout);
 		return -1;
 	}
 
@@ -367,18 +368,15 @@ int read_file_entry(FILE *fp, dictionary * aux){
 
 	nritems = fread(&(aux->key),sizeof(uint32_t),1,fp);//write key and value length
 	if(nritems!=1){
-		printf("fread key reached eof\n"); 
 		return -1;
 	}
 	nritems = fread(&(aux->value_length),sizeof(uint32_t),1,fp);//read key and value length
 	if(nritems!=1){
-		printf("fread value_length reached eof\n"); 
 		return -1;
 	}
 	temp_value = malloc(aux->value_length);
 	nritems = fread(temp_value,aux->value_length,1,fp);//read value
 	if(nritems!=1){
-		printf("fread value reached eof\n"); 
 		return -1;
 	}
 	aux->value=temp_value;
@@ -391,6 +389,7 @@ int read_file_entry(FILE *fp, dictionary * aux){
 
 
 int create_backup(const char * file_name){
+
 	//DO NOT need mutex, due to only being executed in dataserver initialize
 	if(!isEmpty){
 	    dictionary* aux = database;
@@ -440,54 +439,3 @@ int close_log(){
 	return fclose(log_fp);
 }
 
-/*
-void main(void){
-	dictionary *entry;
-	int * value;
-	uint32_t key=10;
-	dictionary * read_value;
-
-	value = (int *) malloc(sizeof(int));
-	*value =150;
-
-	if(dictionary_init()==-1)
-		printf("init error\n");
-
-	printf("after init\n");
-
-	if(add_entry(key, (void *) value,sizeof(int),0)==-1)
-		printf("add entry error\n");
-
-	printf("after add\n");
-
-	entry = find_entry(10);
-	if(entry==NULL)
-		printf("entry null\n");
-	else
-		printf("key=%d value=%d value_length=%d\n", entry->key, *((int *)entry->value), entry->value_length );
-
-	if(add_entry(50,(void *)&value,sizeof(int),0)==-1)
-		printf("add entry error\n");
-
-	entry = find_entry(50);
-	if(entry==NULL)
-		printf("entry null\n");
-	else
-		printf("key=%d value=%d value_length=%d\n", entry->key, *((int *)entry->value), entry->value_length );
-
-	
-	if(delete_entry(key))
-		printf("Remove: value not exists\n");
-	else
-		printf("value removed\n");
-	entry = find_entry(10);
-	if (entry!=NULL)
-		printf("key=%d value=%d value_length=%d\n", entry->key, *((int *)entry->value), entry->value_length );
-	else
-		printf("Not exists\n");
-
-	if(read_entry(50, &read_value)==0)
-		printf("read_value=%d\n", (*(int *)read_value));
-	else
-		printf("read_value:error\n");
-}*/
